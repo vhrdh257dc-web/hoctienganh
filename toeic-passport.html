@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+<title>TOEIC Passport — Tự học TOEIC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; }
+  .app-btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .app-btn:hover { transform: translateY(-2px); }
+  .app-btn:active { transform: translateY(0); }
+  .card-hover { transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; }
+  .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(28,42,66,0.14); border-color: #A23B2E; }
+  .flip-scene { perspective: 1400px; }
+  .flip-card { transition: transform 0.55s cubic-bezier(0.4,0.2,0.2,1); transform-style: preserve-3d; position: relative; }
+  .flip-card.is-flipped { transform: rotateY(180deg); }
+  .flip-face { position: absolute; inset: 0; backface-visibility: hidden; }
+  .flip-back { transform: rotateY(180deg); }
+  .quiz-opt:hover { border-color: #1C2A42 !important; }
+  .tab-scroll::-webkit-scrollbar { display: none; }
+  ::selection { background: #B8892F; color: #1C2A42; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+/* ============================== DESIGN TOKENS ============================== */
+const T = {
+  ink: "#1C2A42",
+  inkSoft: "#4A5A78",
+  paper: "#F3EEE1",
+  paperDeep: "#E8E0CC",
+  card: "#FBF8F0",
+  stamp: "#A23B2E",
+  stampDeep: "#7E2E24",
+  teal: "#2C6E68",
+  gold: "#B8892F",
+  line: "rgba(28,42,66,0.16)",
+};
+
+/* ============================== ICONS (inline SVG, no external deps) ============================== */
+function IconBase({ children, size = 18, color = "currentColor", style }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+      {children}
+    </svg>
+  );
+}
+const ChevronRight = (p) => <IconBase {...p}><polyline points="9 6 15 12 9 18" /></IconBase>;
+const ChevronLeft = (p) => <IconBase {...p}><polyline points="15 6 9 12 15 18" /></IconBase>;
+const Check = (p) => <IconBase {...p}><polyline points="20 6 9 17 4 12" /></IconBase>;
+const XIcon = (p) => <IconBase {...p}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></IconBase>;
+const Home = (p) => <IconBase {...p}><path d="M3 11l9-8 9 8" /><path d="M5 10v10h14V10" /><path d="M9 21v-7h6v7" /></IconBase>;
+const BookOpen = (p) => <IconBase {...p}><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z" /><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z" /></IconBase>;
+const Layers = (p) => <IconBase {...p}><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></IconBase>;
+const Trophy = (p) => <IconBase {...p}><path d="M6 9H4a2 2 0 0 1-2-2V5h4" /><path d="M18 9h2a2 2 0 0 0 2-2V5h-4" /><path d="M6 4h12v5a6 6 0 0 1-12 0z" /><path d="M9 20h6" /><path d="M12 15v5" /></IconBase>;
+const Target = (p) => <IconBase {...p}><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></IconBase>;
+const Medal = (p) => <IconBase {...p}><circle cx="12" cy="15" r="6" /><path d="M9 10L6 3M15 10l3-7" /></IconBase>;
+const UserIcon = (p) => <IconBase {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a8 8 0 0 1 16 0v1" /></IconBase>;
+const Flame = (p) => <IconBase {...p}><path d="M12 2c1 4-4 5-4 9a4 4 0 0 0 8 0c0-2-1-3-1-3s2 1 2 5a6 6 0 1 1-12 0c0-6 5-7 7-11z" /></IconBase>;
+const RotateCcw = (p) => <IconBase {...p}><path d="M3 12a9 9 0 1 0 3-6.7" /><polyline points="3 4 3 9 8 9" /></IconBase>;
+const Plane = (p) => <IconBase {...p}><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4z" /></IconBase>;
+
+/* ============================== CONTENT DATA ============================== */
+const GRAMMAR_TOPICS = [
+  { id: "tenses", stampCode: "TNS", title: "Các thì", subtitle: "Tenses",
+    summary: "Thì cho biết hành động xảy ra khi nào: đang diễn ra, đã hoàn tất, hay còn ở tương lai. TOEIC hay kiểm tra thì hiện tại hoàn thành, quá khứ tiếp diễn và tương lai hoàn thành trong bối cảnh công sở.",
+    signals: ["yesterday", "already / yet", "since / for", "right now", "by the time", "next month"],
+    examples: [
+      { en: "She has lived in Hanoi for five years.", vi: "Cô ấy đã sống ở Hà Nội được năm năm." },
+      { en: "They were having dinner when I called.", vi: "Họ đang ăn tối khi tôi gọi điện." },
+      { en: "By next year, I will have graduated.", vi: "Đến năm sau, tôi sẽ đã tốt nghiệp." },
+    ]},
+  { id: "pronouns", stampCode: "PRN", title: "Đại từ", subtitle: "Pronouns",
+    summary: "Đại từ thay thế cho danh từ để câu gọn hơn: đại từ nhân xưng, sở hữu, phản thân và quan hệ. Đề thi hay bẫy giữa who/whom/whose và themselves/them.",
+    signals: ["which / who / whom", "themselves / each other", "yours / theirs", "this / that / these"],
+    examples: [
+      { en: "This is the book which I told you about.", vi: "Đây là quyển sách mà tôi đã kể cho bạn." },
+      { en: "They introduced themselves to the new manager.", vi: "Họ tự giới thiệu bản thân với quản lý mới." },
+      { en: "Is this pen yours?", vi: "Cây bút này là của bạn à?" },
+    ]},
+  { id: "parts", stampCode: "POS", title: "Từ loại", subtitle: "Parts of Speech",
+    summary: "5 loại từ chính: danh từ (N), động từ (V), tính từ (Adj), trạng từ (Adv), giới từ (Prep). Nhận diện vị trí trong câu là chìa khóa của Part 5.",
+    signals: ["a/an/the + N", "to be + Adj", "V + Adv", "Adj trước danh từ", "Adv sau động từ"],
+    examples: [
+      { en: "The manager gave a convincing presentation.", vi: "Người quản lý đã có một bài thuyết trình thuyết phục." },
+      { en: "She completed the task efficiently.", vi: "Cô ấy hoàn thành công việc một cách hiệu quả." },
+      { en: "His performance impressed the board.", vi: "Màn thể hiện của anh ấy đã gây ấn tượng với hội đồng." },
+    ]},
+  { id: "passive", stampCode: "PSV", title: "Câu bị động", subtitle: "Passive Voice",
+    summary: "Dùng khi muốn nhấn mạnh đối tượng chịu tác động thay vì người thực hiện hành động. Công thức: to be + V3/ed. Rất phổ biến trong email và thông báo công ty.",
+    signals: ["be + V3/ed", "will be + V3", "must/should be + V3", "by + tác nhân"],
+    examples: [
+      { en: "The report was reviewed by the manager yesterday.", vi: "Bản báo cáo đã được quản lý xem xét hôm qua." },
+      { en: "New policies will be announced next month.", vi: "Chính sách mới sẽ được công bố vào tháng sau." },
+      { en: "The contract must be signed before the deadline.", vi: "Hợp đồng phải được ký trước hạn chót." },
+    ]},
+  { id: "conditional", stampCode: "CND", title: "Câu điều kiện", subtitle: "Conditional Sentences",
+    summary: "Diễn tả một sự việc phụ thuộc vào điều kiện: loại 0 (sự thật), loại 1 (có thể xảy ra), loại 2 (giả định hiện tại), loại 3 (giả định quá khứ, đã không xảy ra).",
+    signals: ["If + hiện tại, will + V", "If + were, would + V", "If + had + V3, would have + V3"],
+    examples: [
+      { en: "If I were you, I would accept the offer.", vi: "Nếu tôi là bạn, tôi sẽ chấp nhận lời đề nghị." },
+      { en: "If the shipment arrives late, we will notify the customer immediately.", vi: "Nếu hàng đến trễ, chúng tôi sẽ báo ngay cho khách hàng." },
+      { en: "If she had studied harder, she would have passed the exam.", vi: "Nếu cô ấy học chăm hơn, cô ấy đã đậu kỳ thi rồi." },
+    ]},
+  { id: "comparison", stampCode: "CMP", title: "Câu so sánh", subtitle: "Comparisons",
+    summary: "So sánh hai hay nhiều đối tượng: so sánh hơn (more/-er), so sánh nhất (most/-est), và so sánh bằng (as...as). Chú ý tính từ ngắn/dài khi thêm đuôi.",
+    signals: ["more/-er + than", "the most/-est", "as + adj + as", "less...than"],
+    examples: [
+      { en: "This plan is more effective than the previous one.", vi: "Kế hoạch này hiệu quả hơn kế hoạch trước." },
+      { en: "She is the most diligent employee in the department.", vi: "Cô ấy là nhân viên chăm chỉ nhất phòng ban." },
+      { en: "The new model runs as fast as the old one.", vi: "Mẫu mới chạy nhanh bằng mẫu cũ." },
+    ]},
+];
+
+const GRAMMAR_QUIZ = [
+  { topic: "tenses", prompt: 'By the time she arrived, we ___ dinner.', options: ["had finished", "have finished", "finished", "were finishing"], correct: 0 },
+  { topic: "tenses", prompt: "Look! It ___ outside.", options: ["is raining", "rains", "rained", "has rained"], correct: 0 },
+  { topic: "tenses", prompt: "She ___ in this company since 2019.", options: ["has worked", "worked", "works", "was working"], correct: 0 },
+  { topic: "pronouns", prompt: "This is the book ___ I told you about.", options: ["which", "who", "whose", "whom"], correct: 0 },
+  { topic: "pronouns", prompt: "They introduced ___ to the new manager.", options: ["themselves", "them", "their", "theirs"], correct: 0 },
+  { topic: "pronouns", prompt: "Is this pen ___?", options: ["yours", "you", "your", "yourself"], correct: 0 },
+  { topic: "parts", prompt: "The manager gave a ___ presentation.", options: ["convincing", "convince", "conviction", "convincingly"], correct: 0 },
+  { topic: "parts", prompt: "She completed the task ___.", options: ["efficiently", "efficient", "efficiency", "effect"], correct: 0 },
+  { topic: "parts", prompt: "His ___ impressed the board.", options: ["performance", "perform", "performs", "performing"], correct: 0 },
+  { topic: "passive", prompt: "The report ___ by the manager yesterday.", options: ["was reviewed", "reviewed", "is reviewed", "review"], correct: 0 },
+  { topic: "passive", prompt: "New policies ___ next month.", options: ["will be announced", "will announce", "announced", "are announcing"], correct: 0 },
+  { topic: "passive", prompt: "The contract ___ before the deadline.", options: ["must be signed", "must sign", "signs", "signing"], correct: 0 },
+  { topic: "conditional", prompt: "If I ___ you, I would accept the offer.", options: ["were", "was", "am", "be"], correct: 0 },
+  { topic: "conditional", prompt: "If the shipment arrives late, we ___ the customer immediately.", options: ["will notify", "notify", "notified", "would notify"], correct: 0 },
+  { topic: "conditional", prompt: "If she had studied harder, she ___ the exam.", options: ["would have passed", "would pass", "passed", "will pass"], correct: 0 },
+  { topic: "comparison", prompt: "This plan is ___ than the previous one.", options: ["more effective", "effective", "effectiver", "most effective"], correct: 0 },
+  { topic: "comparison", prompt: "She is ___ employee in the department.", options: ["the most diligent", "more diligent", "diligent", "most diligent than"], correct: 0 },
+  { topic: "comparison", prompt: "The new model runs ___ as the old one.", options: ["as fast", "faster", "fastest", "so fast"], correct: 0 },
+];
+
+const VOCAB_CATEGORIES = [
+  { id: "office", name: "Văn phòng & Họp", words: [
+    { en: "agenda", vi: "chương trình họp", ex: "Please review the agenda before the meeting." },
+    { en: "colleague", vi: "đồng nghiệp", ex: "My colleague helped me finish the report." },
+    { en: "deadline", vi: "hạn chót", ex: "We must submit the proposal before the deadline." },
+    { en: "memo", vi: "bản ghi nhớ", ex: "The manager sent a memo about the new schedule." },
+    { en: "supervisor", vi: "người giám sát", ex: "Ask your supervisor for approval first." },
+    { en: "conference room", vi: "phòng họp", ex: "The meeting will be held in conference room B." },
+    { en: "minutes", vi: "biên bản họp", ex: "She took the minutes during the meeting." },
+    { en: "postpone", vi: "hoãn lại", ex: "We had to postpone the launch event." },
+  ]},
+  { id: "travel", name: "Du lịch & Di chuyển", words: [
+    { en: "itinerary", vi: "lịch trình", ex: "Our itinerary includes three cities in five days." },
+    { en: "boarding pass", vi: "thẻ lên máy bay", ex: "Please have your boarding pass ready." },
+    { en: "reservation", vi: "đặt chỗ", ex: "I made a reservation for two nights." },
+    { en: "luggage", vi: "hành lý", ex: "Her luggage was lost during the connecting flight." },
+    { en: "departure", vi: "khởi hành", ex: "The departure time was delayed by an hour." },
+    { en: "connecting flight", vi: "chuyến bay nối chuyến", ex: "We have a two-hour layover for our connecting flight." },
+    { en: "customs", vi: "hải quan", ex: "It took a while to clear customs." },
+    { en: "accommodation", vi: "chỗ ở", ex: "The company arranged accommodation near the office." },
+  ]},
+  { id: "shopping", name: "Mua sắm & Hợp đồng", words: [
+    { en: "invoice", vi: "hóa đơn", ex: "The invoice will be sent within three business days." },
+    { en: "refund", vi: "hoàn tiền", ex: "You can request a refund within 30 days." },
+    { en: "warranty", vi: "bảo hành", ex: "This laptop comes with a two-year warranty." },
+    { en: "discount", vi: "giảm giá", ex: "We offer a 20% discount for bulk orders." },
+    { en: "receipt", vi: "biên lai", ex: "Keep your receipt in case you need an exchange." },
+    { en: "purchase order", vi: "đơn đặt hàng", ex: "The supplier confirmed our purchase order." },
+    { en: "installment", vi: "trả góp", ex: "You can pay for it in monthly installments." },
+    { en: "negotiate", vi: "đàm phán", ex: "Both sides agreed to negotiate the price." },
+  ]},
+  { id: "marketing", name: "Tiếp thị & Bán hàng", words: [
+    { en: "campaign", vi: "chiến dịch", ex: "The new campaign targets young professionals." },
+    { en: "target audience", vi: "đối tượng mục tiêu", ex: "Our target audience is mainly office workers." },
+    { en: "revenue", vi: "doanh thu", ex: "Revenue increased by 15% this quarter." },
+    { en: "brand awareness", vi: "nhận diện thương hiệu", ex: "The event helped raise brand awareness." },
+    { en: "promotion", vi: "khuyến mãi", ex: "The store is running a summer promotion." },
+    { en: "market share", vi: "thị phần", ex: "The company expanded its market share abroad." },
+    { en: "endorsement", vi: "sự chứng thực", ex: "The brand signed an athlete for endorsement." },
+    { en: "competitor", vi: "đối thủ cạnh tranh", ex: "Our main competitor just launched a similar product." },
+  ]},
+  { id: "hr", name: "Nhân sự", words: [
+    { en: "recruitment", vi: "tuyển dụng", ex: "The recruitment process takes about a month." },
+    { en: "candidate", vi: "ứng viên", ex: "Three candidates were shortlisted for the role." },
+    { en: "onboarding", vi: "hội nhập nhân viên mới", ex: "Onboarding usually lasts one week." },
+    { en: "performance review", vi: "đánh giá hiệu suất", ex: "Performance reviews are held every six months." },
+    { en: "resignation", vi: "đơn xin nghỉ việc", ex: "She submitted her resignation last week." },
+    { en: "benefits", vi: "phúc lợi", ex: "The company offers health insurance benefits." },
+    { en: "probation period", vi: "thời gian thử việc", ex: "New hires have a two-month probation period." },
+    { en: "career advancement", vi: "thăng tiến sự nghiệp", ex: "This role offers strong career advancement." },
+  ]},
+];
+
+const MOCK_LEADERBOARD = [
+  { name: "Minh Anh", score: 9, total: 10, date: "12/07" },
+  { name: "Quang Huy", score: 8, total: 10, date: "10/07" },
+  { name: "Thu Trang", score: 8, total: 10, date: "09/07" },
+  { name: "Đức Anh", score: 7, total: 10, date: "08/07" },
+  { name: "Ngọc Hà", score: 6, total: 10, date: "07/07" },
+];
+
+const CATEGORY_TAGLINE = {
+  office: "Từ vựng dùng trong công việc và cuộc họp hằng ngày.",
+  travel: "Từ vựng cho các chuyến công tác và du lịch.",
+  shopping: "Từ vựng mua bán, hóa đơn và hợp đồng.",
+  marketing: "Từ vựng tiếp thị, thương hiệu và bán hàng.",
+  hr: "Từ vựng tuyển dụng và quản lý nhân sự.",
+};
+
+/* ============================== HELPERS ============================== */
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function buildVocabPool() {
+  const all = VOCAB_CATEGORIES.flatMap((c) => c.words.map((w) => ({ ...w, cat: c.id })));
+  return all.map((w) => {
+    const distractors = shuffle(all.filter((o) => o.vi !== w.vi)).slice(0, 3).map((o) => o.vi);
+    const options = shuffle([w.vi, ...distractors]);
+    return { type: "vocab", prompt: `Từ "${w.en}" có nghĩa là gì?`, options, correctAnswer: w.vi };
+  });
+}
+function buildGrammarPool() {
+  return GRAMMAR_QUIZ.map((q) => ({
+    type: "grammar", prompt: q.prompt, options: q.options, correctAnswer: q.options[q.correct], topic: q.topic,
+  }));
+}
+function todayStr() {
+  const d = new Date();
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/* ============================== SMALL UI PIECES ============================== */
+function Stamp({ code, size = 56 }) {
+  return (
+    <div style={{ width: size, height: size, borderRadius: "50%", border: `2px solid ${T.stamp}`,
+      display: "flex", alignItems: "center", justifyContent: "center", color: T.stamp,
+      fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600, fontSize: size * 0.22,
+      letterSpacing: "0.05em", transform: "rotate(-8deg)", position: "relative", flexShrink: 0 }}>
+      <div style={{ position: "absolute", inset: 4, borderRadius: "50%", border: `1px dashed ${T.stamp}`, opacity: 0.6 }} />
+      {code}
+    </div>
+  );
+}
+function NavTab({ active, onClick, icon: Icon, label }) {
+  return (
+    <button onClick={onClick} style={{
+      display: "flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 999,
+      border: "none", cursor: "pointer", background: active ? T.ink : "transparent",
+      color: active ? T.paper : T.ink, fontFamily: "'Inter', sans-serif", fontWeight: 600,
+      fontSize: 14, transition: "background 0.2s ease, color 0.2s ease", whiteSpace: "nowrap" }}>
+      <Icon size={16} />{label}
+    </button>
+  );
+}
+function SectionEyebrow({ children }) {
+  return (
+    <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, letterSpacing: "0.14em",
+      textTransform: "uppercase", color: T.stamp, fontWeight: 600, marginBottom: 8 }}>
+      {children}
+    </div>
+  );
+}
+function primaryBtnStyle() {
+  return { display: "inline-flex", alignItems: "center", gap: 8, background: T.stamp, color: T.paper,
+    border: "none", borderRadius: 999, padding: "12px 22px", fontWeight: 600, fontSize: 15,
+    cursor: "pointer", fontFamily: "'Inter', sans-serif" };
+}
+function ghostBtnStyle() {
+  return { display: "inline-flex", alignItems: "center", gap: 8, background: "transparent", color: T.ink,
+    border: `1.5px solid ${T.ink}`, borderRadius: 999, padding: "12px 22px", fontWeight: 600, fontSize: 15,
+    cursor: "pointer", fontFamily: "'Inter', sans-serif" };
+}
+
+/* ============================== MAIN APP ============================== */
+function App() {
+  const [view, setView] = useState("home");
+  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [catIndex, setCatIndex] = useState(0);
+  const [cardIndex, setCardIndex] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [knownWords, setKnownWords] = useState({});
+
+  const [quizStage, setQuizStage] = useState("setup");
+  const [quizFilter, setQuizFilter] = useState("all");
+  const [quizCount, setQuizCount] = useState(10);
+  const [quizQuestions, setQuizQuestions] = useState([]);
+  const [quizIndex, setQuizIndex] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState([]);
+  const [selectedOption, setSelectedOption] = useState(null);
+
+  const [leaderboard, setLeaderboard] = useState(MOCK_LEADERBOARD);
+  const [playerName, setPlayerName] = useState("");
+  const [nameSaved, setNameSaved] = useState(false);
+  const [bestScore, setBestScore] = useState(null);
+
+  const totalWordsSeen = Object.keys(knownWords).length;
+
+  const goto = (v) => { window.scrollTo({ top: 0, behavior: "smooth" }); setView(v); };
+  const openTopic = (topic) => { setSelectedTopic(topic); goto("grammarDetail"); };
+  const openCategory = (idx) => { setCatIndex(idx); setCardIndex(0); setFlipped(false); goto("vocabDeck"); };
+  const markKnown = (id) => setKnownWords((prev) => ({ ...prev, [id]: true }));
+  const nextCard = () => { setFlipped(false); const cat = VOCAB_CATEGORIES[catIndex]; setCardIndex((i) => (i + 1) % cat.words.length); };
+  const prevCard = () => { setFlipped(false); const cat = VOCAB_CATEGORIES[catIndex]; setCardIndex((i) => (i - 1 + cat.words.length) % cat.words.length); };
+
+  const startQuiz = () => {
+    let pool = [];
+    if (quizFilter === "all") pool = [...buildVocabPool(), ...buildGrammarPool()];
+    else if (quizFilter === "vocab") pool = buildVocabPool();
+    else pool = buildGrammarPool();
+    const picked = shuffle(pool).slice(0, Math.min(quizCount, pool.length));
+    setQuizQuestions(picked); setQuizIndex(0); setQuizAnswers([]); setSelectedOption(null); setQuizStage("active");
+  };
+  const answerQuiz = (opt) => {
+    if (selectedOption !== null) return;
+    setSelectedOption(opt);
+    const q = quizQuestions[quizIndex];
+    const correct = opt === q.correctAnswer;
+    setQuizAnswers((prev) => [...prev, { ...q, chosen: opt, correct }]);
+  };
+  const nextQuestion = () => {
+    if (quizIndex + 1 >= quizQuestions.length) setQuizStage("result");
+    else { setQuizIndex((i) => i + 1); setSelectedOption(null); }
+  };
+  const finalScore = quizAnswers.filter((a) => a.correct).length;
+  const saveScore = () => {
+    const name = playerName.trim() || "Bạn";
+    const entry = { name, score: finalScore, total: quizQuestions.length, date: todayStr() };
+    setLeaderboard((prev) => [...prev, entry].sort((a, b) => b.score / b.total - a.score / a.total).slice(0, 8));
+    setBestScore((prev) => (prev === null ? finalScore : Math.max(prev, finalScore)));
+    setNameSaved(true);
+  };
+  const resetQuiz = () => { setQuizStage("setup"); setQuizIndex(0); setQuizAnswers([]); setSelectedOption(null); setNameSaved(false); };
+
+  return (
+    <div style={{ minHeight: "100vh", background: T.paper,
+      backgroundImage: "radial-gradient(circle at 1px 1px, rgba(28,42,66,0.06) 1px, transparent 0)",
+      backgroundSize: "18px 18px", fontFamily: "'Inter', sans-serif", color: T.ink }}>
+
+      <header style={{ borderBottom: `1px solid ${T.line}`, position: "sticky", top: 0, zIndex: 20,
+        background: "rgba(243,238,225,0.92)", backdropFilter: "blur(6px)" }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", padding: "16px 24px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px 14px", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => goto("home")}>
+              <Plane size={22} color={T.stamp} style={{ transform: "rotate(-45deg)", flexShrink: 0 }} />
+              <span style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 21, letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>TOEIC Passport</span>
+            </div>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: T.inkSoft, display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <span>TỪ: {totalWordsSeen}</span>
+              <span>ĐIỂM CAO: {bestScore ?? "—"}</span>
+            </div>
+          </div>
+          <nav className="tab-scroll" style={{ display: "flex", gap: 6, overflowX: "auto" }}>
+            <NavTab active={view === "home"} onClick={() => goto("home")} icon={Home} label="Trang chủ" />
+            <NavTab active={view === "grammar" || view === "grammarDetail"} onClick={() => goto("grammar")} icon={BookOpen} label="Ngữ pháp" />
+            <NavTab active={view === "vocab" || view === "vocabDeck"} onClick={() => goto("vocab")} icon={Layers} label="Từ vựng" />
+            <NavTab active={view === "quiz"} onClick={() => { resetQuiz(); goto("quiz"); }} icon={Target} label="Luyện tập" />
+            <NavTab active={view === "leaderboard"} onClick={() => goto("leaderboard")} icon={Trophy} label="Bảng xếp hạng" />
+          </nav>
+        </div>
+      </header>
+
+      <main style={{ maxWidth: 1080, margin: "0 auto", padding: "36px 24px 72px" }}>
+        {view === "home" && <HomeView goto={goto} totalWordsSeen={totalWordsSeen} bestScore={bestScore} openTopic={openTopic} />}
+        {view === "grammar" && <GrammarListView onOpen={openTopic} />}
+        {view === "grammarDetail" && selectedTopic && (
+          <GrammarDetailView topic={selectedTopic} onBack={() => goto("grammar")}
+            onQuiz={() => { resetQuiz(); setQuizFilter("grammar"); goto("quiz"); }} />
+        )}
+        {view === "vocab" && <VocabHubView onOpen={openCategory} knownWords={knownWords} />}
+        {view === "vocabDeck" && (
+          <VocabDeckView category={VOCAB_CATEGORIES[catIndex]} cardIndex={cardIndex} flipped={flipped}
+            setFlipped={setFlipped} onNext={nextCard} onPrev={prevCard} onBack={() => goto("vocab")}
+            markKnown={markKnown} knownWords={knownWords} />
+        )}
+        {view === "quiz" && quizStage === "setup" && (
+          <QuizSetupView quizFilter={quizFilter} setQuizFilter={setQuizFilter} quizCount={quizCount}
+            setQuizCount={setQuizCount} onStart={startQuiz} />
+        )}
+        {view === "quiz" && quizStage === "active" && quizQuestions.length > 0 && (
+          <QuizActiveView question={quizQuestions[quizIndex]} index={quizIndex} total={quizQuestions.length}
+            selectedOption={selectedOption} onAnswer={answerQuiz} onNext={nextQuestion} />
+        )}
+        {view === "quiz" && quizStage === "result" && (
+          <QuizResultView score={finalScore} total={quizQuestions.length} answers={quizAnswers}
+            playerName={playerName} setPlayerName={setPlayerName} nameSaved={nameSaved}
+            onSave={saveScore} onRetry={resetQuiz} onLeaderboard={() => goto("leaderboard")} />
+        )}
+        {view === "leaderboard" && <LeaderboardView leaderboard={leaderboard} />}
+      </main>
+
+      <footer style={{ borderTop: `1px solid ${T.line}`, padding: "20px 24px", textAlign: "center", color: T.inkSoft, fontSize: 13 }}>
+        Bản demo tự học TOEIC — nội dung chỉ mang tính minh họa.
+      </footer>
+    </div>
+  );
+}
+
+function HomeView({ goto, totalWordsSeen, bestScore, openTopic }) {
+  return (
+    <div>
+      <section style={{ border: `1.5px dashed ${T.line}`, borderRadius: 20, padding: "40px 32px",
+        background: T.card, position: "relative", overflow: "hidden", marginBottom: 40 }}>
+        <SectionEyebrow>Vé lên máy bay cho hành trình chinh phục TOEIC</SectionEyebrow>
+        <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 700,
+          lineHeight: 1.08, margin: "0 0 14px", maxWidth: 640 }}>
+          Đóng dấu từng chủ điểm, <span style={{ color: T.stamp }}>lên trình</span> tiếng Anh mỗi ngày.
+        </h1>
+        <p style={{ fontSize: 16, color: T.inkSoft, maxWidth: 520, lineHeight: 1.6, marginBottom: 26 }}>
+          Ngữ pháp, từ vựng theo chủ đề công sở, bài luyện tập trắc nghiệm và bảng xếp hạng —
+          tất cả trong một hành trình học TOEIC gọn nhẹ.
+        </p>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <button className="app-btn" onClick={() => goto("grammar")} style={primaryBtnStyle()}>Bắt đầu học ngữ pháp <ChevronRight size={16} /></button>
+          <button className="app-btn" onClick={() => goto("quiz")} style={ghostBtnStyle()}>Làm bài luyện tập</button>
+        </div>
+      </section>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14, marginBottom: 44 }}>
+        <StatCard icon={Layers} label="Từ đã xem" value={totalWordsSeen} />
+        <StatCard icon={Target} label="Điểm cao nhất" value={bestScore ?? "—"} />
+        <StatCard icon={BookOpen} label="Chủ điểm ngữ pháp" value={GRAMMAR_TOPICS.length} />
+        <StatCard icon={Flame} label="Chủ đề từ vựng" value={VOCAB_CATEGORIES.length} />
+      </div>
+
+      <SectionEyebrow>Ngữ pháp nổi bật</SectionEyebrow>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, marginBottom: 12 }}>
+        {GRAMMAR_TOPICS.slice(0, 3).map((t) => <TopicCard key={t.id} topic={t} onClick={() => openTopic(t)} />)}
+      </div>
+    </div>
+  );
+}
+function StatCard({ icon: Icon, label, value }) {
+  return (
+    <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: "16px 16px" }}>
+      <Icon size={18} color={T.teal} />
+      <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 26, fontWeight: 600, marginTop: 8 }}>{value}</div>
+      <div style={{ fontSize: 13, color: T.inkSoft }}>{label}</div>
+    </div>
+  );
+}
+function TopicCard({ topic, onClick }) {
+  return (
+    <button className="card-hover" onClick={onClick} style={{ textAlign: "left", background: T.card,
+      border: `1px solid ${T.line}`, borderRadius: 16, padding: 18, cursor: "pointer", display: "flex", gap: 14, alignItems: "flex-start" }}>
+      <Stamp code={topic.stampCode} />
+      <div>
+        <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: 18 }}>{topic.title}</div>
+        <div style={{ fontSize: 12, color: T.stamp, fontFamily: "'IBM Plex Mono', monospace", marginBottom: 6 }}>{topic.subtitle}</div>
+        <div style={{ fontSize: 13.5, color: T.inkSoft, lineHeight: 1.5 }}>{topic.summary.slice(0, 80)}…</div>
+      </div>
+    </button>
+  );
+}
+function GrammarListView({ onOpen }) {
+  return (
+    <div>
+      <SectionEyebrow>Sổ tay ngữ pháp</SectionEyebrow>
+      <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 30, margin: "0 0 22px" }}>Chọn một chủ điểm để bắt đầu</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+        {GRAMMAR_TOPICS.map((t) => <TopicCard key={t.id} topic={t} onClick={() => onOpen(t)} />)}
+      </div>
+    </div>
+  );
+}
+function GrammarDetailView({ topic, onBack, onQuiz }) {
+  return (
+    <div>
+      <button onClick={onBack} style={{ ...ghostBtnStyle(), padding: "8px 16px", marginBottom: 22, fontSize: 13 }} className="app-btn"><ChevronLeft size={15} /> Quay lại</button>
+      <div style={{ display: "flex", gap: 18, alignItems: "flex-start", marginBottom: 20 }}>
+        <Stamp code={topic.stampCode} size={68} />
+        <div>
+          <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 30, margin: 0 }}>{topic.title}</h2>
+          <div style={{ color: T.stamp, fontFamily: "'IBM Plex Mono', monospace", fontSize: 13 }}>{topic.subtitle}</div>
+        </div>
+      </div>
+      <p style={{ fontSize: 16, lineHeight: 1.7, color: T.inkSoft, maxWidth: 640, marginBottom: 24 }}>{topic.summary}</p>
+      <SectionEyebrow>Dấu hiệu nhận biết</SectionEyebrow>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28 }}>
+        {topic.signals.map((s, i) => (
+          <span key={i} style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12.5, padding: "6px 12px",
+            borderRadius: 999, border: `1px solid ${T.teal}`, color: T.teal }}>{s}</span>
+        ))}
+      </div>
+      <SectionEyebrow>Ví dụ</SectionEyebrow>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 30 }}>
+        {topic.examples.map((ex, i) => (
+          <div key={i} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 12, padding: "14px 16px" }}>
+            <div style={{ fontWeight: 600, marginBottom: 3 }}>{ex.en}</div>
+            <div style={{ color: T.inkSoft, fontSize: 14 }}>{ex.vi}</div>
+          </div>
+        ))}
+      </div>
+      <button className="app-btn" onClick={onQuiz} style={primaryBtnStyle()}>Luyện tập chủ điểm này <Target size={16} /></button>
+    </div>
+  );
+}
+function VocabHubView({ onOpen, knownWords }) {
+  return (
+    <div>
+      <SectionEyebrow>Bộ thẻ từ vựng</SectionEyebrow>
+      <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 30, margin: "0 0 22px" }}>Chọn một chủ đề để luyện flashcard</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 16 }}>
+        {VOCAB_CATEGORIES.map((c, idx) => {
+          const known = c.words.filter((w) => knownWords[`${c.id}-${w.en}`]).length;
+          return (
+            <button key={c.id} className="card-hover" onClick={() => onOpen(idx)} style={{ textAlign: "left",
+              background: T.card, border: `1px solid ${T.line}`, borderRadius: 16, padding: 18, cursor: "pointer" }}>
+              <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 600, fontSize: 18, marginBottom: 4 }}>{c.name}</div>
+              <div style={{ fontSize: 13.5, color: T.inkSoft, lineHeight: 1.5, marginBottom: 12 }}>{CATEGORY_TAGLINE[c.id]}</div>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: T.teal }}>{c.words.length} từ · đã thuộc {known}</div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+function VocabDeckView({ category, cardIndex, flipped, setFlipped, onNext, onPrev, onBack, markKnown, knownWords }) {
+  const word = category.words[cardIndex];
+  const wordId = `${category.id}-${word.en}`;
+  const isKnown = !!knownWords[wordId];
+  return (
+    <div>
+      <button onClick={onBack} style={{ ...ghostBtnStyle(), padding: "8px 16px", marginBottom: 22, fontSize: 13 }} className="app-btn"><ChevronLeft size={15} /> Quay lại</button>
+      <SectionEyebrow>{category.name}</SectionEyebrow>
+      <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, color: T.inkSoft, marginBottom: 18 }}>Thẻ {cardIndex + 1} / {category.words.length}</div>
+      <div className="flip-scene" style={{ maxWidth: 460, margin: "0 auto 24px", height: 260 }}>
+        <div className={`flip-card${flipped ? " is-flipped" : ""}`} style={{ width: "100%", height: "100%", cursor: "pointer" }} onClick={() => setFlipped((f) => !f)}>
+          <div className="flip-face" style={{ background: T.card, border: `2px dashed ${T.ink}`, borderRadius: 18,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24,
+            boxShadow: "0 8px 20px rgba(28,42,66,0.10)" }}>
+            <div style={{ position: "absolute", top: 14, left: 14, fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: T.inkSoft }}>EN → VI</div>
+            <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 32, textAlign: "center" }}>{word.en}</div>
+            <div style={{ fontSize: 13, color: T.inkSoft, marginTop: 14 }}>Nhấn để xem nghĩa</div>
+          </div>
+          <div className="flip-face flip-back" style={{ background: T.ink, color: T.paper, border: `2px dashed ${T.gold}`, borderRadius: 18,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center" }}>
+            <div style={{ fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 26, marginBottom: 10 }}>{word.vi}</div>
+            <div style={{ fontSize: 14, opacity: 0.85, lineHeight: 1.5, fontStyle: "italic" }}>“{word.ex}”</div>
+          </div>
+        </div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
+        <button className="app-btn" onClick={onPrev} style={ghostBtnStyle()}><ChevronLeft size={16} /> Trước</button>
+        <button className="app-btn" onClick={() => markKnown(wordId)} style={{ ...primaryBtnStyle(), background: isKnown ? T.teal : T.stamp }}><Check size={16} /> {isKnown ? "Đã thuộc" : "Đánh dấu đã thuộc"}</button>
+        <button className="app-btn" onClick={onNext} style={ghostBtnStyle()}>Tiếp <ChevronRight size={16} /></button>
+      </div>
+    </div>
+  );
+}
+function QuizSetupView({ quizFilter, setQuizFilter, quizCount, setQuizCount, onStart }) {
+  const filters = [{ id: "all", label: "Tất cả" }, { id: "grammar", label: "Ngữ pháp" }, { id: "vocab", label: "Từ vựng" }];
+  const counts = [5, 10, 15];
+  return (
+    <div>
+      <SectionEyebrow>Phòng luyện tập</SectionEyebrow>
+      <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 30, margin: "0 0 22px" }}>Thiết lập bài luyện tập</h2>
+      <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 16, padding: 24, maxWidth: 480 }}>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontWeight: 600, marginBottom: 10, fontSize: 14 }}>Nội dung</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {filters.map((f) => (
+              <button key={f.id} onClick={() => setQuizFilter(f.id)} className="app-btn" style={{ padding: "8px 16px", borderRadius: 999,
+                border: `1.5px solid ${quizFilter === f.id ? T.stamp : T.line}`, background: quizFilter === f.id ? T.stamp : "transparent",
+                color: quizFilter === f.id ? T.paper : T.ink, fontWeight: 600, fontSize: 13.5, cursor: "pointer" }}>{f.label}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontWeight: 600, marginBottom: 10, fontSize: 14 }}>Số câu hỏi</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            {counts.map((c) => (
+              <button key={c} onClick={() => setQuizCount(c)} className="app-btn" style={{ padding: "8px 16px", borderRadius: 999,
+                border: `1.5px solid ${quizCount === c ? T.teal : T.line}`, background: quizCount === c ? T.teal : "transparent",
+                color: quizCount === c ? T.paper : T.ink, fontWeight: 600, fontSize: 13.5, cursor: "pointer" }}>{c} câu</button>
+            ))}
+          </div>
+        </div>
+        <button className="app-btn" onClick={onStart} style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center" }}>Bắt đầu làm bài <ChevronRight size={16} /></button>
+      </div>
+    </div>
+  );
+}
+function QuizActiveView({ question, index, total, selectedOption, onAnswer, onNext }) {
+  const progress = (index / total) * 100;
+  return (
+    <div style={{ maxWidth: 560, margin: "0 auto" }}>
+      <div style={{ height: 6, background: T.paperDeep, borderRadius: 999, overflow: "hidden", marginBottom: 20 }}>
+        <div style={{ height: "100%", width: `${progress}%`, background: T.stamp, transition: "width 0.3s ease" }} />
+      </div>
+      <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12.5, color: T.inkSoft, marginBottom: 10 }}>Câu {index + 1} / {total}</div>
+      <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 16, padding: "26px 24px", marginBottom: 20 }}>
+        <div style={{ fontFamily: "'Fraunces', serif", fontSize: 21, fontWeight: 600, lineHeight: 1.4 }}>{question.prompt}</div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
+        {question.options.map((opt, i) => {
+          const isSelected = selectedOption === opt;
+          const isCorrect = opt === question.correctAnswer;
+          let bg = "transparent", border = T.line;
+          if (selectedOption !== null) {
+            if (isCorrect) { bg = "rgba(44,110,104,0.12)"; border = T.teal; }
+            else if (isSelected && !isCorrect) { bg = "rgba(162,59,46,0.10)"; border = T.stamp; }
+          }
+          return (
+            <button key={i} className="quiz-opt app-btn" disabled={selectedOption !== null} onClick={() => onAnswer(opt)}
+              style={{ textAlign: "left", padding: "13px 16px", borderRadius: 12, border: `1.5px solid ${border}`,
+                background: bg, color: T.ink, fontSize: 15, cursor: selectedOption !== null ? "default" : "pointer",
+                display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              {opt}
+              {selectedOption !== null && isCorrect && <Check size={17} color={T.teal} />}
+              {selectedOption !== null && isSelected && !isCorrect && <XIcon size={17} color={T.stamp} />}
+            </button>
+          );
+        })}
+      </div>
+      {selectedOption !== null && (
+        <button className="app-btn" onClick={onNext} style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center" }}>
+          {index + 1 >= total ? "Xem kết quả" : "Câu tiếp theo"} <ChevronRight size={16} />
+        </button>
+      )}
+    </div>
+  );
+}
+function QuizResultView({ score, total, answers, playerName, setPlayerName, nameSaved, onSave, onRetry, onLeaderboard }) {
+  const pct = Math.round((score / total) * 100);
+  const missed = answers.filter((a) => !a.correct);
+  return (
+    <div style={{ maxWidth: 560, margin: "0 auto" }}>
+      <div style={{ textAlign: "center", marginBottom: 26 }}>
+        <Stamp code={`${pct}%`} size={92} />
+        <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 28, margin: "16px 0 4px" }}>Bạn đúng {score}/{total} câu</h2>
+        <p style={{ color: T.inkSoft, fontSize: 15 }}>
+          {pct >= 80 ? "Xuất sắc — bạn đã sẵn sàng cho vòng tiếp theo!" : pct >= 50 ? "Khá tốt, luyện thêm để chắc kiến thức nhé." : "Đừng nản — quay lại phần lý thuyết rồi thử lại!"}
+        </p>
+      </div>
+      {!nameSaved ? (
+        <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: 18, marginBottom: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <input value={playerName} onChange={(e) => setPlayerName(e.target.value)} placeholder="Nhập tên của bạn"
+            style={{ flex: 1, minWidth: 160, padding: "10px 14px", borderRadius: 10, border: `1.5px solid ${T.line}`,
+              fontFamily: "'Inter', sans-serif", fontSize: 14, background: T.paper, color: T.ink }} />
+          <button className="app-btn" onClick={onSave} style={primaryBtnStyle()}>Lưu vào bảng xếp hạng <Trophy size={15} /></button>
+        </div>
+      ) : (
+        <div style={{ textAlign: "center", color: T.teal, fontWeight: 600, marginBottom: 20 }}>✓ Đã lưu kết quả vào bảng xếp hạng</div>
+      )}
+      {missed.length > 0 && (
+        <>
+          <SectionEyebrow>Xem lại câu sai</SectionEyebrow>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+            {missed.map((m, i) => (
+              <div key={i} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 12, padding: "13px 16px" }}>
+                <div style={{ fontWeight: 600, marginBottom: 5 }}>{m.prompt}</div>
+                <div style={{ fontSize: 13.5, color: T.stamp }}>Bạn chọn: {m.chosen}</div>
+                <div style={{ fontSize: 13.5, color: T.teal }}>Đáp án đúng: {m.correctAnswer}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <button className="app-btn" onClick={onRetry} style={ghostBtnStyle()}><RotateCcw size={16} /> Làm lại</button>
+        <button className="app-btn" onClick={onLeaderboard} style={primaryBtnStyle()}>Xem bảng xếp hạng <ChevronRight size={16} /></button>
+      </div>
+    </div>
+  );
+}
+function LeaderboardView({ leaderboard }) {
+  const sorted = [...leaderboard].sort((a, b) => b.score / b.total - a.score / a.total);
+  const medalColor = (i) => (i === 0 ? T.gold : i === 1 ? "#9AA3B2" : i === 2 ? "#B08355" : T.line);
+  return (
+    <div>
+      <SectionEyebrow>Sổ danh sách hành khách</SectionEyebrow>
+      <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 30, margin: "0 0 22px" }}>Bảng xếp hạng</h2>
+      <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 16, overflow: "hidden" }}>
+        {sorted.map((row, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 20px",
+            borderBottom: i < sorted.length - 1 ? `1px dashed ${T.line}` : "none" }}>
+            <div style={{ width: 34, height: 34, borderRadius: "50%", border: `2px solid ${medalColor(i)}`,
+              display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'IBM Plex Mono', monospace",
+              fontWeight: 700, fontSize: 13, color: medalColor(i), flexShrink: 0 }}>{i + 1}</div>
+            {i < 3 ? <Medal size={18} color={medalColor(i)} /> : <UserIcon size={18} color={T.inkSoft} />}
+            <div style={{ flex: 1, fontWeight: 600 }}>{row.name}</div>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, color: T.inkSoft }}>{row.date}</div>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: 15, minWidth: 54, textAlign: "right" }}>{row.score}/{row.total}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
