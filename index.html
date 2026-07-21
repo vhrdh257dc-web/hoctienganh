@@ -4,6 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 <title>Study — Tự học TOEIC</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#4F46E5" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Study" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<link rel="icon" href="icon-192.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -11,6 +19,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   html, body { margin: 0; padding: 0; }
   * { box-sizing: border-box; }
@@ -48,10 +57,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-
-function sanitizeKey(str) {
-  return str.trim().toLowerCase().replace(/[^a-z0-9_\-]/g, "_").slice(0, 60) || "hoc_vien";
-}
+const ADMIN_PASSWORD = "admin123"; // đổi mật khẩu này thành mật khẩu riêng của bạn
 
 /* ============================== DESIGN TOKENS ==============================
    Minimal, professional "learning app" palette: near-white surface, indigo
@@ -98,7 +104,11 @@ const Flame = (p) => <IconBase {...p}><path d="M12 2c1 4-4 5-4 9a4 4 0 0 0 8 0c0
 const Info = (p) => <IconBase {...p}><circle cx="12" cy="12" r="9" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></IconBase>;
 const Headphones = (p) => <IconBase {...p}><path d="M3 18v-6a9 9 0 0 1 18 0v6" /><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z" /><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" /></IconBase>;
 const RotateCcw = (p) => <IconBase {...p}><path d="M3 12a9 9 0 1 0 3-6.7" /><polyline points="3 4 3 9 8 9" /></IconBase>;
+const Lock = (p) => <IconBase {...p}><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></IconBase>;
+const Trash = (p) => <IconBase {...p}><polyline points="4 6 6 6 20 6" /><path d="M6 6v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></IconBase>;
+const Plus = (p) => <IconBase {...p}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></IconBase>;
 const Shuffle = (p) => <IconBase {...p}><polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" /><polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" /><line x1="4" y1="4" x2="9" y2="9" /></IconBase>;
+const Upload = (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></IconBase>;
 
 /* ============================== CONTENT: GRAMMAR ============================== */
 const GRAMMAR_TOPICS = [
@@ -109,6 +119,62 @@ const GRAMMAR_TOPICS = [
       { en: "She has lived in Hanoi for five years.", vi: "Cô ấy đã sống ở Hà Nội được năm năm." },
       { en: "They were having dinner when I called.", vi: "Họ đang ăn tối khi tôi gọi điện." },
       { en: "By next year, I will have graduated.", vi: "Đến năm sau, tôi sẽ đã tốt nghiệp." },
+    ],
+    tenseDetails: [
+      { name: "Hiện tại đơn", enName: "Present Simple",
+        definition: "Diễn tả một sự thật hiển nhiên, một thói quen, hoặc hành động lặp đi lặp lại ở hiện tại.",
+        usage: ["Sự thật hiển nhiên, chân lý", "Thói quen, hành động lặp lại thường xuyên", "Lịch trình, thời gian biểu cố định (tàu, giờ làm việc...)"],
+        structure: { aff: "S + V(s/es)", neg: "S + do/does + not + V", ques: "Do/Does + S + V?" },
+        signals: ["always", "usually", "often", "sometimes", "every day/week/month", "never"],
+        example: { en: "The store opens at 8 a.m. every day.", vi: "Cửa hàng mở cửa lúc 8 giờ sáng mỗi ngày." } },
+      { name: "Hiện tại tiếp diễn", enName: "Present Continuous",
+        definition: "Diễn tả hành động đang xảy ra ngay tại thời điểm nói, hoặc một sự việc/kế hoạch mang tính tạm thời.",
+        usage: ["Hành động đang diễn ra ngay lúc nói", "Kế hoạch đã sắp xếp trong tương lai gần", "Sự việc tạm thời, đang thay đổi ở hiện tại"],
+        structure: { aff: "S + am/is/are + V-ing", neg: "S + am/is/are + not + V-ing", ques: "Am/Is/Are + S + V-ing?" },
+        signals: ["now", "right now", "at the moment", "Look!", "Listen!", "currently"],
+        example: { en: "They are having a meeting right now.", vi: "Họ đang họp ngay lúc này." } },
+      { name: "Hiện tại hoàn thành", enName: "Present Perfect",
+        definition: "Diễn tả hành động đã xảy ra trong quá khứ nhưng có liên quan hoặc còn ảnh hưởng tới hiện tại, không nêu rõ thời điểm chính xác.",
+        usage: ["Hành động vừa mới xảy ra", "Hành động bắt đầu trong quá khứ và còn tiếp diễn đến hiện tại", "Kinh nghiệm đã từng trải qua, chưa nói rõ khi nào"],
+        structure: { aff: "S + have/has + V3/ed", neg: "S + have/has + not + V3/ed", ques: "Have/Has + S + V3/ed?" },
+        signals: ["already", "yet", "just", "since", "for", "recently", "so far", "ever / never"],
+        example: { en: "She has worked here since 2019.", vi: "Cô ấy đã làm việc ở đây từ năm 2019." } },
+      { name: "Quá khứ đơn", enName: "Past Simple",
+        definition: "Diễn tả hành động đã xảy ra và kết thúc hoàn toàn trong quá khứ, có thời gian xác định rõ ràng.",
+        usage: ["Hành động đã hoàn tất tại một thời điểm xác định trong quá khứ", "Chuỗi hành động liên tiếp xảy ra trong quá khứ", "Thói quen trong quá khứ (hiện không còn nữa)"],
+        structure: { aff: "S + V2/ed", neg: "S + did + not + V", ques: "Did + S + V?" },
+        signals: ["yesterday", "last week/month/year", "ago", "in + năm đã qua", "when I was young"],
+        example: { en: "We signed the contract last Monday.", vi: "Chúng tôi đã ký hợp đồng vào thứ Hai tuần trước." } },
+      { name: "Quá khứ tiếp diễn", enName: "Past Continuous",
+        definition: "Diễn tả hành động đang xảy ra tại một thời điểm cụ thể trong quá khứ, thường bị một hành động khác xen vào.",
+        usage: ["Hành động đang diễn ra thì bị hành động khác (ở quá khứ đơn) xen vào", "Hai hành động xảy ra song song trong quá khứ", "Miêu tả bối cảnh, khung cảnh của một câu chuyện"],
+        structure: { aff: "S + was/were + V-ing", neg: "S + was/were + not + V-ing", ques: "Was/Were + S + V-ing?" },
+        signals: ["while", "when", "at this time yesterday", "at that moment"],
+        example: { en: "They were having dinner when I called.", vi: "Họ đang ăn tối khi tôi gọi điện." } },
+      { name: "Quá khứ hoàn thành", enName: "Past Perfect",
+        definition: "Diễn tả hành động đã xảy ra và hoàn tất trước một hành động hoặc thời điểm khác trong quá khứ.",
+        usage: ["Hành động xảy ra và hoàn tất trước một hành động khác trong quá khứ", "Diễn tả nguyên nhân xảy ra trước, dẫn đến kết quả sau đó trong quá khứ"],
+        structure: { aff: "S + had + V3/ed", neg: "S + had + not + V3/ed", ques: "Had + S + V3/ed?" },
+        signals: ["before", "after", "by the time", "already (trong bối cảnh quá khứ)"],
+        example: { en: "By the time she arrived, we had finished dinner.", vi: "Đến khi cô ấy tới, chúng tôi đã ăn tối xong." } },
+      { name: "Tương lai đơn", enName: "Future Simple",
+        definition: "Diễn tả một dự đoán không chắc chắn, một quyết định đưa ra ngay tại thời điểm nói, hoặc lời hứa/đề nghị.",
+        usage: ["Dự đoán không có căn cứ rõ ràng", "Quyết định tức thời ngay khi đang nói", "Lời hứa, lời mời, đề nghị giúp đỡ"],
+        structure: { aff: "S + will + V", neg: "S + will + not + V", ques: "Will + S + V?" },
+        signals: ["tomorrow", "next week/month/year", "soon", "in the future"],
+        example: { en: "We will launch the new product next month.", vi: "Chúng tôi sẽ ra mắt sản phẩm mới vào tháng sau." } },
+      { name: "Tương lai gần", enName: "Near Future (be going to)",
+        definition: "Diễn tả một kế hoạch, dự định đã được sắp xếp từ trước, hoặc một dự đoán có căn cứ rõ ràng ở hiện tại.",
+        usage: ["Kế hoạch, dự định đã quyết định từ trước", "Dự đoán dựa trên dấu hiệu rõ ràng đang thấy ở hiện tại"],
+        structure: { aff: "S + am/is/are + going to + V", neg: "S + am/is/are + not + going to + V", ques: "Am/Is/Are + S + going to + V?" },
+        signals: ["kế hoạch đã định trước", "dấu hiệu rõ ràng ở hiện tại"],
+        example: { en: "The company is going to expand its office next year.", vi: "Công ty dự định mở rộng văn phòng vào năm sau." } },
+      { name: "Tương lai hoàn thành", enName: "Future Perfect",
+        definition: "Diễn tả hành động sẽ hoàn tất trước một thời điểm hoặc một hành động khác trong tương lai.",
+        usage: ["Hành động sẽ hoàn thành trước một mốc thời gian xác định trong tương lai", "So sánh giữa hai việc, trong đó một việc hoàn tất trước việc kia trong tương lai"],
+        structure: { aff: "S + will + have + V3/ed", neg: "S + will + not + have + V3/ed", ques: "Will + S + have + V3/ed?" },
+        signals: ["by the time", "by + mốc thời gian tương lai", "before + mốc thời gian tương lai"],
+        example: { en: "By next year, I will have graduated.", vi: "Đến năm sau, tôi sẽ đã tốt nghiệp." } },
     ]},
   { id: "pronouns", code: "02", title: "Đại từ", subtitle: "Pronouns",
     summary: "Đại từ thay thế cho danh từ để câu gọn hơn: đại từ nhân xưng, sở hữu, phản thân và quan hệ. Đề thi hay bẫy giữa who/whom/whose và themselves/them.",
@@ -117,6 +183,32 @@ const GRAMMAR_TOPICS = [
       { en: "This is the book which I told you about.", vi: "Đây là quyển sách mà tôi đã kể cho bạn." },
       { en: "They introduced themselves to the new manager.", vi: "Họ tự giới thiệu bản thân với quản lý mới." },
       { en: "Is this pen yours?", vi: "Cây bút này là của bạn à?" },
+    ],
+    points: [
+      { name: "Đại từ chủ ngữ", enName: "Subject Pronouns",
+        definition: "Đứng làm chủ ngữ của câu, trước động từ.",
+        structure: { formula: "I / You / He / She / It / We / They + V" },
+        example: { en: "She manages the sales team.", vi: "Cô ấy quản lý đội bán hàng." } },
+      { name: "Đại từ tân ngữ", enName: "Object Pronouns",
+        definition: "Đứng sau động từ hoặc sau giới từ, làm tân ngữ nhận hành động.",
+        structure: { formula: "V/Prep + me/you/him/her/it/us/them" },
+        example: { en: "The manager asked him to join the call.", vi: "Quản lý đã yêu cầu anh ấy tham gia cuộc gọi." } },
+      { name: "Tính từ sở hữu", enName: "Possessive Adjectives",
+        definition: "Đứng trước danh từ để chỉ sự sở hữu, luôn cần đi kèm một danh từ theo sau.",
+        structure: { formula: "my/your/his/her/its/our/their + N" },
+        example: { en: "Please check your email for the update.", vi: "Vui lòng kiểm tra email của bạn để xem cập nhật." } },
+      { name: "Đại từ sở hữu", enName: "Possessive Pronouns",
+        definition: "Đứng độc lập, thay thế cho cả cụm 'tính từ sở hữu + danh từ', không cần danh từ theo sau.",
+        structure: { formula: "mine/yours/his/hers/its/ours/theirs" },
+        example: { en: "This desk is mine; that one is yours.", vi: "Bàn này là của tôi; bàn kia là của bạn." } },
+      { name: "Đại từ phản thân", enName: "Reflexive Pronouns",
+        definition: "Dùng khi chủ ngữ và tân ngữ là cùng một đối tượng, hoặc để nhấn mạnh chính chủ ngữ đó.",
+        structure: { formula: "myself/yourself/himself/herself/itself/ourselves/yourselves/themselves" },
+        example: { en: "They completed the project themselves.", vi: "Họ tự mình hoàn thành dự án." } },
+      { name: "Đại từ quan hệ", enName: "Relative Pronouns",
+        definition: "Dùng để nối một mệnh đề bổ sung thông tin cho danh từ đứng trước (xem thêm ở chủ điểm Mệnh đề quan hệ).",
+        structure: { formula: "who / whom / whose / which / that" },
+        example: { en: "The client who called earlier is waiting.", vi: "Vị khách đã gọi lúc trước đang chờ." } },
     ]},
   { id: "parts", code: "03", title: "Từ loại", subtitle: "Parts of Speech",
     summary: "5 loại từ chính: danh từ (N), động từ (V), tính từ (Adj), trạng từ (Adv), giới từ (Prep). Nhận diện vị trí trong câu là chìa khóa của Part 5.",
@@ -125,6 +217,28 @@ const GRAMMAR_TOPICS = [
       { en: "The manager gave a convincing presentation.", vi: "Người quản lý đã có một bài thuyết trình thuyết phục." },
       { en: "She completed the task efficiently.", vi: "Cô ấy hoàn thành công việc một cách hiệu quả." },
       { en: "His performance impressed the board.", vi: "Màn thể hiện của anh ấy đã gây ấn tượng với hội đồng." },
+    ],
+    points: [
+      { name: "Danh từ", enName: "Noun",
+        definition: "Chỉ người, vật, sự việc, khái niệm. Thường đứng sau a/an/the, tính từ sở hữu, hoặc làm chủ ngữ/tân ngữ.",
+        structure: { formula: "a/an/the/my/this + N" },
+        example: { en: "The company announced a new policy.", vi: "Công ty đã công bố một chính sách mới." } },
+      { name: "Động từ", enName: "Verb",
+        definition: "Diễn tả hành động hoặc trạng thái, làm vị ngữ chính của câu.",
+        structure: { formula: "S + V(+ Object)" },
+        example: { en: "They finalized the budget yesterday.", vi: "Họ đã hoàn tất ngân sách hôm qua." } },
+      { name: "Tính từ", enName: "Adjective",
+        definition: "Bổ nghĩa cho danh từ, thường đứng trước danh từ hoặc sau động từ 'to be'/động từ liên kết.",
+        structure: { formula: "Adj + N   |   to be + Adj" },
+        example: { en: "The proposal seems reasonable.", vi: "Đề xuất có vẻ hợp lý." } },
+      { name: "Trạng từ", enName: "Adverb",
+        definition: "Bổ nghĩa cho động từ, tính từ, hoặc cả câu; thường đứng sau động từ hoặc trước tính từ/trạng từ khác.",
+        structure: { formula: "V + Adv   |   Adv + Adj" },
+        example: { en: "The team worked closely together.", vi: "Nhóm đã làm việc chặt chẽ với nhau." } },
+      { name: "Giới từ", enName: "Preposition",
+        definition: "Chỉ mối quan hệ về thời gian, nơi chốn, phương hướng giữa các thành phần trong câu; luôn theo sau bởi danh từ/danh động từ.",
+        structure: { formula: "Prep + N/V-ing" },
+        example: { en: "The report is due on Friday.", vi: "Báo cáo phải nộp vào thứ Sáu." } },
     ]},
   { id: "passive", code: "04", title: "Câu bị động", subtitle: "Passive Voice",
     summary: "Dùng khi muốn nhấn mạnh đối tượng chịu tác động thay vì người thực hiện hành động. Công thức: to be + V3/ed. Rất phổ biến trong email và thông báo công ty.",
@@ -133,6 +247,28 @@ const GRAMMAR_TOPICS = [
       { en: "The report was reviewed by the manager yesterday.", vi: "Bản báo cáo đã được quản lý xem xét hôm qua." },
       { en: "New policies will be announced next month.", vi: "Chính sách mới sẽ được công bố vào tháng sau." },
       { en: "The contract must be signed before the deadline.", vi: "Hợp đồng phải được ký trước hạn chót." },
+    ],
+    points: [
+      { name: "Bị động hiện tại đơn", enName: "Present Simple Passive",
+        definition: "Diễn tả một sự thật, quy trình lặp lại mà chủ thể là người/vật chịu tác động.",
+        structure: { formula: "S + am/is/are + V3/ed" },
+        example: { en: "Invoices are checked by the accounting team.", vi: "Hóa đơn được kiểm tra bởi bộ phận kế toán." } },
+      { name: "Bị động quá khứ đơn", enName: "Past Simple Passive",
+        definition: "Diễn tả một hành động đã xảy ra và hoàn tất trong quá khứ, nhấn mạnh đối tượng chịu tác động.",
+        structure: { formula: "S + was/were + V3/ed" },
+        example: { en: "The report was reviewed by the manager yesterday.", vi: "Bản báo cáo đã được quản lý xem xét hôm qua." } },
+      { name: "Bị động hiện tại hoàn thành", enName: "Present Perfect Passive",
+        definition: "Diễn tả hành động đã hoàn tất, còn liên quan tới hiện tại, nhấn mạnh đối tượng bị tác động.",
+        structure: { formula: "S + have/has + been + V3/ed" },
+        example: { en: "The documents have been submitted already.", vi: "Các tài liệu đã được nộp rồi." } },
+      { name: "Bị động tương lai", enName: "Future Passive",
+        definition: "Diễn tả một hành động sẽ được thực hiện lên đối tượng trong tương lai.",
+        structure: { formula: "S + will + be + V3/ed" },
+        example: { en: "New policies will be announced next month.", vi: "Chính sách mới sẽ được công bố vào tháng sau." } },
+      { name: "Bị động với động từ khuyết thiếu", enName: "Modal Passive",
+        definition: "Kết hợp modal verb với dạng bị động để diễn tả nghĩa vụ, khả năng, hoặc lời khuyên đối với đối tượng bị tác động.",
+        structure: { formula: "S + modal (must/should/can...) + be + V3/ed" },
+        example: { en: "The contract must be signed before the deadline.", vi: "Hợp đồng phải được ký trước hạn chót." } },
     ]},
   { id: "conditional", code: "05", title: "Câu điều kiện", subtitle: "Conditional Sentences",
     summary: "Diễn tả một sự việc phụ thuộc vào điều kiện: loại 0 (sự thật), loại 1 (có thể xảy ra), loại 2 (giả định hiện tại), loại 3 (giả định quá khứ, đã không xảy ra).",
@@ -141,6 +277,24 @@ const GRAMMAR_TOPICS = [
       { en: "If I were you, I would accept the offer.", vi: "Nếu tôi là bạn, tôi sẽ chấp nhận lời đề nghị." },
       { en: "If the shipment arrives late, we will notify the customer immediately.", vi: "Nếu hàng đến trễ, chúng tôi sẽ báo ngay cho khách hàng." },
       { en: "If she had studied harder, she would have passed the exam.", vi: "Nếu cô ấy học chăm hơn, cô ấy đã đậu kỳ thi rồi." },
+    ],
+    points: [
+      { name: "Điều kiện loại 0", enName: "Zero Conditional",
+        definition: "Diễn tả một sự thật hiển nhiên, chân lý, hoặc kết quả luôn đúng khi điều kiện xảy ra.",
+        structure: { formula: "If + S + V(hiện tại đơn), S + V(hiện tại đơn)" },
+        example: { en: "If you heat water to 100°C, it boils.", vi: "Nếu đun nước đến 100°C, nước sẽ sôi." } },
+      { name: "Điều kiện loại 1", enName: "First Conditional",
+        definition: "Diễn tả một điều kiện có khả năng xảy ra ở hiện tại/tương lai và kết quả tương ứng.",
+        structure: { formula: "If + S + V(hiện tại đơn), S + will + V" },
+        example: { en: "If the shipment arrives late, we will notify the customer.", vi: "Nếu hàng đến trễ, chúng tôi sẽ báo cho khách hàng." } },
+      { name: "Điều kiện loại 2", enName: "Second Conditional",
+        definition: "Diễn tả một giả định không có thật ở hiện tại, trái với thực tế hiện tại.",
+        structure: { formula: "If + S + V2/were, S + would + V" },
+        example: { en: "If I were you, I would accept the offer.", vi: "Nếu tôi là bạn, tôi sẽ chấp nhận lời đề nghị." } },
+      { name: "Điều kiện loại 3", enName: "Third Conditional",
+        definition: "Diễn tả một giả định không có thật trong quá khứ, việc đã không xảy ra và kết quả giả định đi kèm.",
+        structure: { formula: "If + S + had + V3/ed, S + would have + V3/ed" },
+        example: { en: "If she had studied harder, she would have passed the exam.", vi: "Nếu cô ấy học chăm hơn, cô ấy đã đậu kỳ thi rồi." } },
     ]},
   { id: "comparison", code: "06", title: "Câu so sánh", subtitle: "Comparisons",
     summary: "So sánh hai hay nhiều đối tượng: so sánh hơn (more/-er), so sánh nhất (most/-est), và so sánh bằng (as...as). Chú ý tính từ ngắn/dài khi thêm đuôi.",
@@ -149,6 +303,28 @@ const GRAMMAR_TOPICS = [
       { en: "This plan is more effective than the previous one.", vi: "Kế hoạch này hiệu quả hơn kế hoạch trước." },
       { en: "She is the most diligent employee in the department.", vi: "Cô ấy là nhân viên chăm chỉ nhất phòng ban." },
       { en: "The new model runs as fast as the old one.", vi: "Mẫu mới chạy nhanh bằng mẫu cũ." },
+    ],
+    points: [
+      { name: "So sánh bằng", enName: "Equal Comparison",
+        definition: "Diễn tả hai đối tượng ngang bằng nhau về một đặc điểm nào đó.",
+        structure: { formula: "S + V + as + adj/adv + as + N/pronoun" },
+        example: { en: "The new model runs as fast as the old one.", vi: "Mẫu mới chạy nhanh bằng mẫu cũ." } },
+      { name: "So sánh hơn", enName: "Comparative",
+        definition: "Diễn tả một đối tượng hơn đối tượng còn lại; tính từ/trạng từ ngắn thêm '-er', tính từ/trạng từ dài dùng 'more'.",
+        structure: { formula: "S + V + adj/adv-er / more + adj/adv + than + N" },
+        example: { en: "This plan is more effective than the previous one.", vi: "Kế hoạch này hiệu quả hơn kế hoạch trước." } },
+      { name: "So sánh nhất", enName: "Superlative",
+        definition: "Diễn tả một đối tượng đứng đầu trong một nhóm từ ba đối tượng trở lên.",
+        structure: { formula: "S + V + the + adj/adv-est / the most + adj/adv" },
+        example: { en: "She is the most diligent employee in the department.", vi: "Cô ấy là nhân viên chăm chỉ nhất phòng ban." } },
+      { name: "So sánh kép", enName: "Double Comparative",
+        definition: "Diễn tả hai sự việc thay đổi song song, cái này tăng/giảm thì cái kia cũng tăng/giảm theo.",
+        structure: { formula: "The + comparative + S + V, the + comparative + S + V" },
+        example: { en: "The sooner we finish, the sooner we can leave.", vi: "Chúng ta hoàn thành càng sớm, càng sớm được về." } },
+      { name: "So sánh bội số", enName: "Multiple Numbers Comparison",
+        definition: "Diễn tả một đối tượng gấp bao nhiêu lần đối tượng còn lại.",
+        structure: { formula: "S + V + số lần + as + adj/adv + as + N" },
+        example: { en: "This warehouse is twice as large as the old one.", vi: "Kho hàng này lớn gấp đôi kho cũ." } },
     ]},
   { id: "modals", code: "07", title: "Động từ khuyết thiếu", subtitle: "Modal Verbs",
     summary: "Modal verbs (can, could, may, might, must, should, will, would) đứng trước động từ nguyên mẫu để diễn tả khả năng, sự cho phép, nghĩa vụ hoặc dự đoán. Rất phổ biến trong email công sở khi đưa ra yêu cầu.",
@@ -157,6 +333,28 @@ const GRAMMAR_TOPICS = [
       { en: "You must submit the form before Friday.", vi: "Bạn phải nộp mẫu đơn trước thứ Sáu." },
       { en: "Employees may take a break after two hours.", vi: "Nhân viên có thể nghỉ giải lao sau hai giờ làm việc." },
       { en: "The shipment should arrive by tomorrow.", vi: "Lô hàng sẽ đến vào ngày mai." },
+    ],
+    points: [
+      { name: "Can / Could", enName: "Ability & Permission",
+        definition: "Diễn tả khả năng làm gì đó (can) hoặc xin phép một cách lịch sự (could).",
+        structure: { formula: "S + can/could + V (nguyên mẫu)" },
+        example: { en: "Could you send me the file, please?", vi: "Bạn có thể gửi tôi file được không?" } },
+      { name: "May / Might", enName: "Permission & Possibility",
+        definition: "Diễn tả sự cho phép trang trọng (may), hoặc khả năng có thể xảy ra (may/might).",
+        structure: { formula: "S + may/might + V (nguyên mẫu)" },
+        example: { en: "Employees may take a break after two hours.", vi: "Nhân viên có thể nghỉ giải lao sau hai giờ làm việc." } },
+      { name: "Must / Have to", enName: "Obligation",
+        definition: "Diễn tả sự bắt buộc, quy định phải làm; 'must' mang tính chủ quan, 'have to' mang tính khách quan (do quy định).",
+        structure: { formula: "S + must/have to + V (nguyên mẫu)" },
+        example: { en: "You must submit the form before Friday.", vi: "Bạn phải nộp mẫu đơn trước thứ Sáu." } },
+      { name: "Should / Ought to", enName: "Advice",
+        definition: "Diễn tả lời khuyên, điều nên làm.",
+        structure: { formula: "S + should/ought to + V (nguyên mẫu)" },
+        example: { en: "You should double-check the figures.", vi: "Bạn nên kiểm tra lại các con số." } },
+      { name: "Will / Would", enName: "Prediction & Willingness",
+        definition: "Diễn tả dự đoán chắc chắn (will), hoặc mong muốn/lời mời lịch sự (would).",
+        structure: { formula: "S + will/would + V (nguyên mẫu)" },
+        example: { en: "The shipment should arrive by tomorrow.", vi: "Lô hàng sẽ đến vào ngày mai." } },
     ]},
   { id: "gerund_infinitive", code: "08", title: "Danh động từ & động từ nguyên mẫu", subtitle: "Gerunds & Infinitives",
     summary: "Một số động từ đi với V-ing (gerund), một số đi với to V (infinitive). Đây là dạng bẫy quen thuộc ở Part 5, 6.",
@@ -165,6 +363,24 @@ const GRAMMAR_TOPICS = [
       { en: "The manager suggested revising the budget.", vi: "Người quản lý đề nghị chỉnh sửa lại ngân sách." },
       { en: "We decided to postpone the meeting.", vi: "Chúng tôi quyết định hoãn cuộc họp." },
       { en: "She stopped working to answer the phone.", vi: "Cô ấy dừng làm việc để trả lời điện thoại." },
+    ],
+    points: [
+      { name: "Động từ + V-ing", enName: "Verb + Gerund",
+        definition: "Một số động từ luôn được theo sau bởi danh động từ (V-ing), không dùng 'to V'.",
+        structure: { formula: "enjoy/avoid/suggest/finish/mind/consider/admit + V-ing" },
+        example: { en: "The manager suggested revising the budget.", vi: "Người quản lý đề nghị chỉnh sửa lại ngân sách." } },
+      { name: "Động từ + to V", enName: "Verb + Infinitive",
+        definition: "Một số động từ luôn được theo sau bởi động từ nguyên mẫu có 'to', không dùng V-ing.",
+        structure: { formula: "want/decide/plan/hope/promise/agree/offer + to V" },
+        example: { en: "We decided to postpone the meeting.", vi: "Chúng tôi quyết định hoãn cuộc họp." } },
+      { name: "Động từ + V-ing/to V (nghĩa khác nhau)", enName: "Verb + Gerund/Infinitive (meaning changes)",
+        definition: "Một số động từ đi được với cả hai dạng nhưng nghĩa của câu thay đổi tuỳ theo dạng dùng.",
+        structure: { formula: "stop/remember/forget/try + V-ing (khác nghĩa) + to V" },
+        example: { en: "She stopped working to answer the phone.", vi: "Cô ấy dừng làm việc để trả lời điện thoại." } },
+      { name: "Giới từ + V-ing", enName: "Preposition + Gerund",
+        definition: "Sau giới từ luôn dùng danh động từ (V-ing), không dùng động từ nguyên mẫu.",
+        structure: { formula: "Prep (of/for/before/without...) + V-ing" },
+        example: { en: "Thank you for sending the report on time.", vi: "Cảm ơn bạn đã gửi báo cáo đúng giờ." } },
     ]},
   { id: "relative_clauses", code: "09", title: "Mệnh đề quan hệ", subtitle: "Relative Clauses",
     summary: "Mệnh đề quan hệ bổ sung thông tin cho danh từ đứng trước, dùng who/which/that/whose/where. Giúp câu trang trọng và mạch lạc hơn trong văn phong công sở.",
@@ -173,6 +389,32 @@ const GRAMMAR_TOPICS = [
       { en: "The employee who won the award works in sales.", vi: "Nhân viên giành giải thưởng làm việc ở bộ phận kinh doanh." },
       { en: "This is the software which we use daily.", vi: "Đây là phần mềm mà chúng tôi dùng hằng ngày." },
       { en: "The office where she works is downtown.", vi: "Văn phòng nơi cô ấy làm việc ở trung tâm thành phố." },
+    ],
+    points: [
+      { name: "Who", enName: "Relative pronoun for people (subject)",
+        definition: "Thay thế cho người, làm chủ ngữ trong mệnh đề quan hệ.",
+        structure: { formula: "N (person) + who + V" },
+        example: { en: "The employee who won the award works in sales.", vi: "Nhân viên giành giải thưởng làm việc ở bộ phận kinh doanh." } },
+      { name: "Whom", enName: "Relative pronoun for people (object)",
+        definition: "Thay thế cho người, làm tân ngữ trong mệnh đề quan hệ (thường dùng trong văn phong trang trọng).",
+        structure: { formula: "N (person) + whom + S + V" },
+        example: { en: "The client whom we contacted yesterday confirmed the order.", vi: "Vị khách mà chúng tôi liên hệ hôm qua đã xác nhận đơn hàng." } },
+      { name: "Which", enName: "Relative pronoun for things",
+        definition: "Thay thế cho vật/sự việc, làm chủ ngữ hoặc tân ngữ trong mệnh đề quan hệ.",
+        structure: { formula: "N (thing) + which + V/S+V" },
+        example: { en: "This is the software which we use daily.", vi: "Đây là phần mềm mà chúng tôi dùng hằng ngày." } },
+      { name: "That", enName: "Relative pronoun for people/things",
+        definition: "Có thể thay cho who hoặc which trong mệnh đề quan hệ xác định (không dùng sau dấu phẩy).",
+        structure: { formula: "N (person/thing) + that + V/S+V" },
+        example: { en: "The report that she submitted was very detailed.", vi: "Bản báo cáo mà cô ấy nộp rất chi tiết." } },
+      { name: "Whose", enName: "Relative pronoun showing possession",
+        definition: "Diễn tả sự sở hữu, đứng trước danh từ mà nó bổ nghĩa.",
+        structure: { formula: "N + whose + N + V" },
+        example: { en: "The company whose products we distribute is expanding.", vi: "Công ty mà chúng tôi phân phối sản phẩm đang mở rộng." } },
+      { name: "Where", enName: "Relative adverb for places",
+        definition: "Thay thế cho nơi chốn, đứng sau danh từ chỉ địa điểm.",
+        structure: { formula: "N (place) + where + S + V" },
+        example: { en: "The office where she works is downtown.", vi: "Văn phòng nơi cô ấy làm việc ở trung tâm thành phố." } },
     ]},
   { id: "prepositions", code: "10", title: "Giới từ", subtitle: "Prepositions",
     summary: "Giới từ chỉ thời gian, nơi chốn, phương hướng và mối quan hệ giữa các từ trong câu. TOEIC thường kiểm tra giới từ đi kèm cố định với động từ/tính từ/danh từ.",
@@ -181,6 +423,24 @@ const GRAMMAR_TOPICS = [
       { en: "The meeting is scheduled for 9 a.m. on Monday.", vi: "Cuộc họp được lên lịch lúc 9 giờ sáng thứ Hai." },
       { en: "She is responsible for the marketing budget.", vi: "Cô ấy chịu trách nhiệm về ngân sách marketing." },
       { en: "The decision depends on the client's approval.", vi: "Quyết định phụ thuộc vào sự chấp thuận của khách hàng." },
+    ],
+    points: [
+      { name: "Giới từ chỉ thời gian", enName: "Prepositions of Time",
+        definition: "'at' cho giờ giấc cụ thể, 'on' cho ngày/thứ, 'in' cho tháng/năm/mùa/khoảng thời gian dài.",
+        structure: { formula: "at + giờ  |  on + ngày/thứ  |  in + tháng/năm" },
+        example: { en: "The meeting is scheduled for 9 a.m. on Monday.", vi: "Cuộc họp được lên lịch lúc 9 giờ sáng thứ Hai." } },
+      { name: "Giới từ chỉ nơi chốn", enName: "Prepositions of Place",
+        definition: "'at' cho một điểm cụ thể, 'on' cho bề mặt, 'in' cho không gian bên trong.",
+        structure: { formula: "at + điểm cụ thể  |  on + bề mặt  |  in + không gian" },
+        example: { en: "The documents are in the top drawer.", vi: "Tài liệu ở trong ngăn kéo trên cùng." } },
+      { name: "Giới từ chỉ phương hướng", enName: "Prepositions of Movement",
+        definition: "Diễn tả sự di chuyển từ nơi này đến nơi khác.",
+        structure: { formula: "to / into / onto / from / through" },
+        example: { en: "The manager walked into the conference room.", vi: "Người quản lý bước vào phòng họp." } },
+      { name: "Giới từ đi kèm cố định", enName: "Dependent Prepositions",
+        definition: "Nhiều tính từ/động từ/danh từ luôn đi kèm với một giới từ cố định, cần học thuộc theo cụm.",
+        structure: { formula: "responsible for / depend on / interested in / good at" },
+        example: { en: "She is responsible for the marketing budget.", vi: "Cô ấy chịu trách nhiệm về ngân sách marketing." } },
     ]},
   { id: "word_forms", code: "11", title: "Biến đổi từ loại", subtitle: "Word Forms",
     summary: "Nhận diện hậu tố để đoán từ loại: -tion/-ment/-ness (danh từ), -ive/-ous/-able (tính từ), -ly (trạng từ), -ize/-fy (động từ). Kỹ năng cốt lõi của Part 5, 6.",
@@ -189,6 +449,28 @@ const GRAMMAR_TOPICS = [
       { en: "The company's expansion created new jobs.", vi: "Sự mở rộng của công ty đã tạo ra việc làm mới." },
       { en: "Her explanation was very clear.", vi: "Lời giải thích của cô ấy rất rõ ràng." },
       { en: "They need to finalize the contract soon.", vi: "Họ cần hoàn thiện hợp đồng sớm." },
+    ],
+    points: [
+      { name: "Hậu tố danh từ", enName: "Noun Suffixes",
+        definition: "Các hậu tố phổ biến biến động từ/tính từ thành danh từ.",
+        structure: { formula: "-tion / -ment / -ness / -ity / -ance/ence" },
+        example: { en: "The company's expansion created new jobs.", vi: "Sự mở rộng của công ty đã tạo ra việc làm mới." } },
+      { name: "Hậu tố tính từ", enName: "Adjective Suffixes",
+        definition: "Các hậu tố phổ biến biến danh từ/động từ thành tính từ.",
+        structure: { formula: "-ive / -ous / -able/ible / -al / -ful" },
+        example: { en: "This is a valuable opportunity.", vi: "Đây là một cơ hội quý giá." } },
+      { name: "Hậu tố trạng từ", enName: "Adverb Suffix",
+        definition: "Hầu hết trạng từ được tạo bằng cách thêm '-ly' vào sau tính từ.",
+        structure: { formula: "adj + -ly" },
+        example: { en: "Her explanation was clearly stated.", vi: "Lời giải thích của cô ấy được nói rõ ràng." } },
+      { name: "Hậu tố động từ", enName: "Verb Suffixes",
+        definition: "Các hậu tố phổ biến biến danh từ/tính từ thành động từ.",
+        structure: { formula: "-ize / -ise / -fy / -en / -ate" },
+        example: { en: "They need to finalize the contract soon.", vi: "Họ cần hoàn thiện hợp đồng sớm." } },
+      { name: "Tiền tố phủ định", enName: "Negative Prefixes",
+        definition: "Các tiền tố thêm vào trước từ để tạo nghĩa phủ định/trái nghĩa.",
+        structure: { formula: "un- / in- / im- / dis- / non-" },
+        example: { en: "The plan seems unrealistic.", vi: "Kế hoạch có vẻ không thực tế." } },
     ]},
   { id: "reported_speech", code: "12", title: "Câu tường thuật", subtitle: "Reported Speech",
     summary: "Thuật lại lời nói của người khác, thường lùi thì một bậc so với câu trực tiếp. Xuất hiện trong email và thông báo nội bộ khi truyền đạt thông tin.",
@@ -197,6 +479,24 @@ const GRAMMAR_TOPICS = [
       { en: "She said that the report was ready.", vi: "Cô ấy nói rằng báo cáo đã sẵn sàng." },
       { en: "He told me he would call back later.", vi: "Anh ấy nói với tôi rằng anh ấy sẽ gọi lại sau." },
       { en: "They asked if the meeting had been rescheduled.", vi: "Họ hỏi liệu cuộc họp có bị dời lịch không." },
+    ],
+    points: [
+      { name: "Câu trần thuật", enName: "Reported Statements",
+        definition: "Thuật lại một câu khẳng định, lùi thì một bậc so với câu trực tiếp.",
+        structure: { formula: "S + said (that) / told sb (that) + S + V (lùi thì)" },
+        example: { en: "She said that the report was ready.", vi: "Cô ấy nói rằng báo cáo đã sẵn sàng." } },
+      { name: "Câu hỏi Yes/No", enName: "Reported Yes/No Questions",
+        definition: "Thuật lại câu hỏi Yes/No, dùng if/whether để nối, đổi về dạng câu khẳng định (không đảo ngữ).",
+        structure: { formula: "S + asked (sb) + if/whether + S + V (lùi thì)" },
+        example: { en: "They asked if the meeting had been rescheduled.", vi: "Họ hỏi liệu cuộc họp có bị dời lịch không." } },
+      { name: "Câu hỏi Wh-", enName: "Reported Wh-Questions",
+        definition: "Thuật lại câu hỏi có từ để hỏi, giữ nguyên từ hỏi, đổi về dạng câu khẳng định.",
+        structure: { formula: "S + asked (sb) + Wh-word + S + V (lùi thì)" },
+        example: { en: "He asked me where the file was.", vi: "Anh ấy hỏi tôi tệp tin ở đâu." } },
+      { name: "Câu mệnh lệnh", enName: "Reported Commands",
+        definition: "Thuật lại câu mệnh lệnh/yêu cầu, dùng động từ nguyên mẫu có 'to' (hoặc 'not to' ở dạng phủ định).",
+        structure: { formula: "S + told/asked sb + (not) to + V" },
+        example: { en: "The manager told us to submit the report by Friday.", vi: "Quản lý bảo chúng tôi nộp báo cáo trước thứ Sáu." } },
     ]},
   { id: "conjunctions", code: "13", title: "Liên từ", subtitle: "Conjunctions",
     summary: "Liên từ nối các mệnh đề hoặc từ với nhau: liên từ kết hợp (and, but, or), liên từ phụ thuộc (because, although, if), và liên từ tương quan (both...and, either...or).",
@@ -205,6 +505,20 @@ const GRAMMAR_TOPICS = [
       { en: "Although sales dropped, profits increased.", vi: "Mặc dù doanh số giảm, lợi nhuận vẫn tăng." },
       { en: "The event was postponed because of the storm.", vi: "Sự kiện bị hoãn vì cơn bão." },
       { en: "Employees can choose either remote work or the office.", vi: "Nhân viên có thể chọn làm từ xa hoặc tại văn phòng." },
+    ],
+    points: [
+      { name: "Liên từ kết hợp", enName: "Coordinating Conjunctions (FANBOYS)",
+        definition: "Nối hai từ, cụm từ hoặc mệnh đề độc lập có vai trò ngang hàng nhau.",
+        structure: { formula: "for, and, nor, but, or, yet, so" },
+        example: { en: "We reviewed the plan, and everyone agreed.", vi: "Chúng tôi đã xem xét kế hoạch, và mọi người đều đồng ý." } },
+      { name: "Liên từ phụ thuộc", enName: "Subordinating Conjunctions",
+        definition: "Nối một mệnh đề phụ thuộc vào mệnh đề chính, diễn tả nguyên nhân, nhượng bộ, thời gian, điều kiện...",
+        structure: { formula: "because/since/although/though/when/if + mệnh đề" },
+        example: { en: "Although sales dropped, profits increased.", vi: "Mặc dù doanh số giảm, lợi nhuận vẫn tăng." } },
+      { name: "Liên từ tương quan", enName: "Correlative Conjunctions",
+        definition: "Đi thành cặp để nối hai thành phần có vai trò ngữ pháp giống nhau trong câu.",
+        structure: { formula: "both...and / either...or / neither...nor / not only...but also" },
+        example: { en: "Employees can choose either remote work or the office.", vi: "Nhân viên có thể chọn làm từ xa hoặc tại văn phòng." } },
     ]},
   { id: "causative", code: "14", title: "Câu sai khiến", subtitle: "Causative Form",
     summary: "Diễn tả việc nhờ/thuê người khác làm gì đó: have/get someone do something, hoặc have/get something done. Thường gặp trong ngữ cảnh thuê dịch vụ, sửa chữa.",
@@ -213,6 +527,28 @@ const GRAMMAR_TOPICS = [
       { en: "We had a technician fix the printer.", vi: "Chúng tôi đã nhờ kỹ thuật viên sửa máy in." },
       { en: "She got her contract reviewed by a lawyer.", vi: "Cô ấy đã nhờ luật sư xem lại hợp đồng." },
       { en: "They will have the office repainted this weekend.", vi: "Họ sẽ cho sơn lại văn phòng vào cuối tuần này." },
+    ],
+    points: [
+      { name: "Have + người + V (nguyên mẫu)", enName: "Have sb do sth",
+        definition: "Nhờ/sai ai đó làm gì, nhấn mạnh người thực hiện hành động.",
+        structure: { formula: "S + have + sb + V (nguyên mẫu)" },
+        example: { en: "We had a technician fix the printer.", vi: "Chúng tôi đã nhờ kỹ thuật viên sửa máy in." } },
+      { name: "Get + người + to V", enName: "Get sb to do sth",
+        definition: "Thuyết phục/nhờ ai đó làm gì, sắc thái nhẹ nhàng hơn 'have'.",
+        structure: { formula: "S + get + sb + to V" },
+        example: { en: "She got the intern to organize the files.", vi: "Cô ấy nhờ thực tập sinh sắp xếp lại tài liệu." } },
+      { name: "Have + vật + V3/ed", enName: "Have sth done",
+        definition: "Nhờ/thuê người khác làm gì đó cho mình, nhấn mạnh vào vật/việc được thực hiện (mang tính bị động).",
+        structure: { formula: "S + have + sth + V3/ed" },
+        example: { en: "She got her contract reviewed by a lawyer.", vi: "Cô ấy đã nhờ luật sư xem lại hợp đồng." } },
+      { name: "Get + vật + V3/ed", enName: "Get sth done",
+        definition: "Tương tự 'have sth done', nhấn mạnh việc hoàn tất một việc gì đó thông qua người khác.",
+        structure: { formula: "S + get + sth + V3/ed" },
+        example: { en: "They will have the office repainted this weekend.", vi: "Họ sẽ cho sơn lại văn phòng vào cuối tuần này." } },
+      { name: "Make + người + V (nguyên mẫu)", enName: "Make sb do sth",
+        definition: "Bắt buộc ai đó phải làm gì, mang tính ép buộc mạnh hơn 'have'.",
+        structure: { formula: "S + make + sb + V (nguyên mẫu)" },
+        example: { en: "The manager made the team redo the report.", vi: "Quản lý bắt nhóm làm lại báo cáo." } },
     ]},
   { id: "participles", code: "15", title: "Cụm phân từ", subtitle: "Participles",
     summary: "Phân từ hiện tại (V-ing) và phân từ quá khứ (V-ed/V3) dùng để rút gọn mệnh đề hoặc bổ nghĩa cho danh từ, giúp câu ngắn gọn hơn.",
@@ -221,8 +557,28 @@ const GRAMMAR_TOPICS = [
       { en: "Employees working overtime receive extra pay.", vi: "Nhân viên làm thêm giờ sẽ được trả thêm lương." },
       { en: "The documents submitted yesterday are under review.", vi: "Các tài liệu nộp hôm qua đang được xem xét." },
       { en: "Feeling confident, she presented the proposal.", vi: "Cảm thấy tự tin, cô ấy đã trình bày đề xuất." },
+    ],
+    points: [
+      { name: "Phân từ hiện tại", enName: "Present Participle (V-ing)",
+        definition: "Mang nghĩa chủ động, dùng để bổ nghĩa cho danh từ thực hiện hành động, hoặc rút gọn mệnh đề quan hệ chủ động.",
+        structure: { formula: "N + V-ing (= N + who/which + V)" },
+        example: { en: "Employees working overtime receive extra pay.", vi: "Nhân viên làm thêm giờ sẽ được trả thêm lương." } },
+      { name: "Phân từ quá khứ", enName: "Past Participle (V-ed/V3)",
+        definition: "Mang nghĩa bị động, dùng để bổ nghĩa cho danh từ chịu tác động, hoặc rút gọn mệnh đề quan hệ bị động.",
+        structure: { formula: "N + V-ed/V3 (= N + who/which + be + V-ed/V3)" },
+        example: { en: "The documents submitted yesterday are under review.", vi: "Các tài liệu nộp hôm qua đang được xem xét." } },
+      { name: "Rút gọn mệnh đề trạng ngữ", enName: "Reduced Adverbial Clause",
+        definition: "Rút gọn mệnh đề chỉ thời gian/nguyên nhân khi hai mệnh đề có cùng chủ ngữ, thường đứng đầu câu.",
+        structure: { formula: "V-ing/V3, S + V (chính)" },
+        example: { en: "Feeling confident, she presented the proposal.", vi: "Cảm thấy tự tin, cô ấy đã trình bày đề xuất." } },
+      { name: "Cụm phân từ độc lập", enName: "Absolute Participle Phrase",
+        definition: "Khi chủ ngữ của mệnh đề rút gọn khác với chủ ngữ chính, cần giữ lại chủ ngữ riêng trước phân từ.",
+        structure: { formula: "N (riêng) + V-ing/V3, S + V (chính)" },
+        example: { en: "The report finished, the team moved to the next task.", vi: "Báo cáo hoàn tất, nhóm chuyển sang nhiệm vụ tiếp theo." } },
     ]},
 ];
+
+const TOPIC_TITLE_TO_ID = GRAMMAR_TOPICS.reduce((acc, t) => { acc[t.title] = t.id; return acc; }, {});
 
 const GRAMMAR_QUIZ = [
   { topic: "tenses", prompt: 'By the time she arrived, we ___ dinner.', options: ["had finished", "have finished", "finished", "were finishing"], correct: 0 },
@@ -460,6 +816,19 @@ const TOEIC_SCORE_BANDS = [
 ];
 
 
+const VOCAB_CATEGORY_TITLE_TO_ID = VOCAB_CATEGORIES.reduce((acc, c) => { acc[c.name] = c.id; return acc; }, {});
+
+/* Gộp từ vựng có sẵn với từ vựng do Admin thêm qua Firebase (form hoặc upload Excel).
+   customVocab có dạng { pushKey: { category, en, vi, ex } } */
+function mergeVocabCategories(customVocab) {
+  const extra = Object.entries(customVocab || {});
+  if (extra.length === 0) return VOCAB_CATEGORIES;
+  return VOCAB_CATEGORIES.map((c) => {
+    const added = extra.filter(([, w]) => w.category === c.id).map(([key, w]) => ({ en: w.en, vi: w.vi, ex: w.ex, customKey: key }));
+    return added.length ? { ...c, words: [...c.words, ...added] } : c;
+  });
+}
+
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -468,18 +837,21 @@ function shuffle(arr) {
   }
   return a;
 }
-function buildVocabPool() {
-  const all = VOCAB_CATEGORIES.flatMap((c) => c.words.map((w) => ({ ...w, cat: c.id })));
+function buildVocabPool(vocabCategories) {
+  const all = (vocabCategories || VOCAB_CATEGORIES).flatMap((c) => c.words.map((w) => ({ ...w, cat: c.id })));
   return all.map((w) => {
     const distractors = shuffle(all.filter((o) => o.vi !== w.vi)).slice(0, 3).map((o) => o.vi);
     const options = shuffle([w.vi, ...distractors]);
     return { type: "vocab", prompt: `Từ "${w.en}" có nghĩa là gì?`, options, correctAnswer: w.vi };
   });
 }
-function buildGrammarPool() {
-  return GRAMMAR_QUIZ.map((q) => ({
-    type: "grammar", prompt: q.prompt, options: q.options, correctAnswer: q.options[q.correct], topic: q.topic,
-  }));
+function buildGrammarPool(readTopics, onlyTopicId, customQuestions) {
+  const extra = Object.values(customQuestions || {});
+  return [...GRAMMAR_QUIZ, ...extra]
+    .filter((q) => (onlyTopicId ? q.topic === onlyTopicId : readTopics && readTopics[q.topic]))
+    .map((q) => ({
+      type: "grammar", prompt: q.prompt, options: q.options, correctAnswer: q.options[q.correct], topic: q.topic,
+    }));
 }
 function todayStr() {
   const d = new Date();
@@ -534,60 +906,201 @@ function cardStyle(extra) {
   return { background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, ...extra };
 }
 
-/* ============================== NAME GATE + ROOT ============================== */
-function NameGateView({ onSubmit }) {
+/* ============================== SYNC CODE + ROOT ==============================
+   Mỗi học viên (thực tế là mỗi NGƯỜI, không phải mỗi thiết bị) được định danh bằng
+   một "mã đồng bộ" ngẫu nhiên, sinh ra một lần trên thiết bị đầu tiên và nhập lại
+   trên các thiết bị khác. Cách này đáng tin cậy hơn nhiều so với gõ tên (dễ lệch
+   chữ hoa/thường, dấu cách...) vì mã là duy nhất và không cần gõ lại nội dung.
+================================================================================ */
+function generateSyncCode() {
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // bỏ ký tự dễ nhầm: 0/O, 1/I/L
+  let code = "";
+  for (let i = 0; i < 8; i++) {
+    if (i === 4) code += "-";
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+function normalizeSyncCode(raw) {
+  return raw.trim().toUpperCase().replace(/[^A-Z0-9-]/g, "");
+}
+
+function SyncGateView({ onReady }) {
+  const [mode, setMode] = useState("choose"); // choose | createName | createDone | link | linkName
   const [name, setName] = useState("");
-  return (
+  const [codeInput, setCodeInput] = useState("");
+  const [newCode, setNewCode] = useState("");
+  const [linkError, setLinkError] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const finishCreate = () => {
+    const code = generateSyncCode();
+    setNewCode(code);
+    db.ref(`users/${code}/name`).set(name.trim());
+    setMode("createDone");
+  };
+  const finishLinkLookup = () => {
+    const code = normalizeSyncCode(codeInput);
+    if (!code) { setLinkError("Nhập mã đồng bộ trước đã."); return; }
+    setChecking(true);
+    setLinkError("");
+    db.ref(`users/${code}/name`).once("value").then((snap) => {
+      setChecking(false);
+      const existingName = snap.val();
+      if (existingName) {
+        onReady(code, existingName);
+      } else {
+        setName("");
+        setMode("linkName");
+      }
+    }).catch(() => { setChecking(false); setLinkError("Không kết nối được, thử lại nhé."); });
+  };
+  const finishLinkNew = () => {
+    const code = normalizeSyncCode(codeInput);
+    db.ref(`users/${code}/name`).set(name.trim());
+    onReady(code, name.trim());
+  };
+  const copyCode = () => {
+    navigator.clipboard?.writeText(newCode).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); });
+  };
+
+  const wrap = (children) => (
     <div style={{ minHeight: "100vh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ ...cardStyle({ padding: 28 }), maxWidth: 380, width: "100%" }}>
+      <div style={{ ...cardStyle({ padding: 28 }), maxWidth: 400, width: "100%" }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: T.primary, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
           <BookOpen size={20} color="#fff" />
         </div>
-        <h2 style={{ fontSize: 21, fontWeight: 800, margin: "0 0 6px" }}>Chào bạn 👋</h2>
-        <p style={{ fontSize: 14, color: T.textSoft, lineHeight: 1.5, marginBottom: 18 }}>
-          Nhập tên hoặc biệt danh để lưu tiến độ học của bạn lên đám mây — mở lại trên máy khác vẫn giữ nguyên.
-        </p>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) onSubmit(name.trim()); }}
-          placeholder="Ví dụ: Minh Anh"
-          style={{ width: "100%", padding: "11px 14px", borderRadius: 9, border: `1.5px solid ${T.border}`,
-            fontFamily: "'Inter', sans-serif", fontSize: 14, marginBottom: 14, background: "#fff", color: T.text }}
-        />
-        <button className="app-btn" disabled={!name.trim()} onClick={() => onSubmit(name.trim())}
-          style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center", opacity: name.trim() ? 1 : 0.5 }}>
-          Bắt đầu học <ChevronRight size={16} />
-        </button>
+        {children}
       </div>
     </div>
   );
+
+  if (mode === "choose") {
+    return wrap(<>
+      <h2 style={{ fontSize: 21, fontWeight: 800, margin: "0 0 6px" }}>Chào bạn 👋</h2>
+      <p style={{ fontSize: 14, color: T.textSoft, lineHeight: 1.5, marginBottom: 20 }}>
+        Đây là máy đầu tiên bạn học, hay bạn đang liên kết thêm một thiết bị (điện thoại, iPad...) để đồng bộ tiến độ đã có?
+      </p>
+      <button className="app-btn" onClick={() => setMode("createName")} style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center", marginBottom: 10 }}>
+        Máy đầu tiên — bắt đầu mới <ChevronRight size={16} />
+      </button>
+      <button className="app-btn" onClick={() => { setMode("link"); setLinkError(""); }} style={{ ...ghostBtnStyle(), width: "100%", justifyContent: "center" }}>
+        Tôi đã có mã đồng bộ
+      </button>
+    </>);
+  }
+
+  if (mode === "createName") {
+    return wrap(<>
+      <h2 style={{ fontSize: 21, fontWeight: 800, margin: "0 0 6px" }}>Tên hiển thị</h2>
+      <p style={{ fontSize: 14, color: T.textSoft, lineHeight: 1.5, marginBottom: 18 }}>
+        Dùng cho bảng xếp hạng. Sau bước này bạn sẽ nhận một mã đồng bộ để dùng trên các thiết bị khác.
+      </p>
+      <input value={name} onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) finishCreate(); }}
+        placeholder="Ví dụ: Minh Anh" autoFocus
+        style={{ width: "100%", padding: "11px 14px", borderRadius: 9, border: `1.5px solid ${T.border}`,
+          fontFamily: "'Inter', sans-serif", fontSize: 14, marginBottom: 14, background: "#fff", color: T.text, boxSizing: "border-box" }} />
+      <button className="app-btn" disabled={!name.trim()} onClick={finishCreate}
+        style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center", opacity: name.trim() ? 1 : 0.5 }}>
+        Tạo mã đồng bộ <ChevronRight size={16} />
+      </button>
+    </>);
+  }
+
+  if (mode === "createDone") {
+    return wrap(<>
+      <h2 style={{ fontSize: 21, fontWeight: 800, margin: "0 0 6px" }}>Mã đồng bộ của bạn</h2>
+      <p style={{ fontSize: 14, color: T.textSoft, lineHeight: 1.5, marginBottom: 16 }}>
+        Lưu lại mã này. Khi mở app trên iPhone hoặc iPad, chọn "Tôi đã có mã đồng bộ" và nhập đúng mã dưới đây — tiến độ học sẽ tự động khớp.
+      </p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+        background: T.primarySoft, color: T.primaryDeep, borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
+        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: 20, letterSpacing: "0.04em" }}>{newCode}</span>
+        <button onClick={copyCode} style={{ background: "none", border: "none", cursor: "pointer", color: T.primaryDeep, fontWeight: 600, fontSize: 12.5 }}>
+          {copied ? "Đã sao chép" : "Sao chép"}
+        </button>
+      </div>
+      <button className="app-btn" onClick={() => onReady(newCode, name.trim())}
+        style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center" }}>
+        Vào học <ChevronRight size={16} />
+      </button>
+    </>);
+  }
+
+  if (mode === "link") {
+    return wrap(<>
+      <h2 style={{ fontSize: 21, fontWeight: 800, margin: "0 0 6px" }}>Nhập mã đồng bộ</h2>
+      <p style={{ fontSize: 14, color: T.textSoft, lineHeight: 1.5, marginBottom: 18 }}>
+        Mã bạn đã lưu từ thiết bị đầu tiên, dạng <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>ABCD-1234</span>.
+      </p>
+      <input value={codeInput} onChange={(e) => setCodeInput(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") finishLinkLookup(); }}
+        placeholder="ABCD-1234" autoFocus
+        style={{ width: "100%", padding: "11px 14px", borderRadius: 9, border: `1.5px solid ${linkError ? T.danger : T.border}`,
+          fontFamily: "'IBM Plex Mono', monospace", fontSize: 16, letterSpacing: "0.04em", marginBottom: 10, background: "#fff", color: T.text, boxSizing: "border-box" }} />
+      {linkError && <div style={{ color: T.danger, fontSize: 12.5, marginBottom: 10 }}>{linkError}</div>}
+      <button className="app-btn" disabled={checking} onClick={finishLinkLookup}
+        style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center", marginBottom: 10, opacity: checking ? 0.6 : 1 }}>
+        {checking ? "Đang kiểm tra..." : "Liên kết thiết bị"}
+      </button>
+      <button className="app-btn" onClick={() => setMode("choose")} style={{ ...ghostBtnStyle(), width: "100%", justifyContent: "center" }}>
+        Quay lại
+      </button>
+    </>);
+  }
+
+  if (mode === "linkName") {
+    return wrap(<>
+      <h2 style={{ fontSize: 21, fontWeight: 800, margin: "0 0 6px" }}>Mã mới, chưa có tên</h2>
+      <p style={{ fontSize: 14, color: T.textSoft, lineHeight: 1.5, marginBottom: 18 }}>
+        Không tìm thấy dữ liệu cũ cho mã này — có thể đây là mã bạn tự đặt. Đặt tên hiển thị để tiếp tục.
+      </p>
+      <input value={name} onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) finishLinkNew(); }}
+        placeholder="Ví dụ: Minh Anh" autoFocus
+        style={{ width: "100%", padding: "11px 14px", borderRadius: 9, border: `1.5px solid ${T.border}`,
+          fontFamily: "'Inter', sans-serif", fontSize: 14, marginBottom: 14, background: "#fff", color: T.text, boxSizing: "border-box" }} />
+      <button className="app-btn" disabled={!name.trim()} onClick={finishLinkNew}
+        style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center", opacity: name.trim() ? 1 : 0.5 }}>
+        Vào học <ChevronRight size={16} />
+      </button>
+    </>);
+  }
+
+  return null;
 }
 
 function RootApp() {
+  const [syncCode, setSyncCode] = useState(() => localStorage.getItem("toeic_sync_code") || "");
   const [studentName, setStudentName] = useState(() => localStorage.getItem("toeic_student_name") || "");
 
-  if (!studentName) {
+  if (!syncCode) {
     return (
-      <NameGateView onSubmit={(name) => {
+      <SyncGateView onReady={(code, name) => {
+        localStorage.setItem("toeic_sync_code", code);
         localStorage.setItem("toeic_student_name", name);
+        setSyncCode(code);
         setStudentName(name);
       }} />
     );
   }
-  return <StudyApp studentName={studentName} onSwitchUser={() => {
+  return <StudyApp studentKey={syncCode} studentName={studentName} onSwitchUser={() => {
+    localStorage.removeItem("toeic_sync_code");
     localStorage.removeItem("toeic_student_name");
+    setSyncCode("");
     setStudentName("");
   }} />;
 }
 
 /* ============================== MAIN APP ============================== */
-function StudyApp({ studentName, onSwitchUser }) {
-  const studentKey = useMemo(() => sanitizeKey(studentName), [studentName]);
+function StudyApp({ studentKey, studentName, onSwitchUser }) {
+  const isAdminUser = studentName.trim().toLowerCase() === "admin";
   const [dataLoaded, setDataLoaded] = useState(false);
   const saveTimer = useRef(null);
 
-  const [view, setView] = useState("home");
+  const [view, setView] = useState(isAdminUser ? "admin" : "home");
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [catIndex, setCatIndex] = useState(0);
   const [deckOrder, setDeckOrder] = useState(null); // shuffled index array or null = in-order
@@ -595,6 +1108,7 @@ function StudyApp({ studentName, onSwitchUser }) {
   const [flipped, setFlipped] = useState(false);
   const [knownWords, setKnownWords] = useState({});
   const [learningWords, setLearningWords] = useState({});
+  const [readTopics, setReadTopics] = useState({});
 
   const [quizStage, setQuizStage] = useState("setup");
   const [quizFilter, setQuizFilter] = useState("all");
@@ -609,6 +1123,10 @@ function StudyApp({ studentName, onSwitchUser }) {
   const [nameSaved, setNameSaved] = useState(false);
   const [bestScore, setBestScore] = useState(null);
 
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [customQuestions, setCustomQuestions] = useState({});
+  const [customVocab, setCustomVocab] = useState({});
+
   const totalWordsSeen = Object.keys(knownWords).length;
 
   /* ---- Load this student's progress from Firebase on mount ---- */
@@ -619,6 +1137,7 @@ function StudyApp({ studentName, onSwitchUser }) {
         if (val) {
           if (val.knownWords) setKnownWords(val.knownWords);
           if (val.learningWords) setLearningWords(val.learningWords);
+          if (val.readTopics) setReadTopics(val.readTopics);
           if (typeof val.bestScore === "number") setBestScore(val.bestScore);
         }
         setDataLoaded(true);
@@ -631,10 +1150,10 @@ function StudyApp({ studentName, onSwitchUser }) {
     if (!dataLoaded) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      db.ref(`users/${studentKey}`).set({ knownWords, learningWords, bestScore: bestScore ?? null, name: studentName });
+      db.ref(`users/${studentKey}`).set({ knownWords, learningWords, readTopics, bestScore: bestScore ?? null, name: studentName });
     }, 600);
     return () => clearTimeout(saveTimer.current);
-  }, [knownWords, learningWords, bestScore, dataLoaded, studentKey, studentName]);
+  }, [knownWords, learningWords, readTopics, bestScore, dataLoaded, studentKey, studentName]);
 
   /* ---- Load + subscribe to shared leaderboard ---- */
   useEffect(() => {
@@ -649,28 +1168,55 @@ function StudyApp({ studentName, onSwitchUser }) {
     return () => ref.off("value", listener);
   }, []);
 
+  /* ---- Load + subscribe to shared custom questions (added via Admin) ---- */
+  useEffect(() => {
+    const ref = db.ref("content/customGrammarQuestions");
+    const listener = ref.on("value", (snap) => setCustomQuestions(snap.val() || {}));
+    return () => ref.off("value", listener);
+  }, []);
+
+  /* ---- Load + subscribe to shared custom vocabulary (added via Admin) ---- */
+  useEffect(() => {
+    const ref = db.ref("content/customVocab");
+    const listener = ref.on("value", (snap) => setCustomVocab(snap.val() || {}));
+    return () => ref.off("value", listener);
+  }, []);
+
+  /* ---- Merge built-in vocab categories with custom words added via Admin ---- */
+  const vocabCategories = useMemo(() => mergeVocabCategories(customVocab), [customVocab]);
+
   const goto = (v) => { window.scrollTo({ top: 0, behavior: "smooth" }); setView(v); };
-  const openTopic = (topic) => { setSelectedTopic(topic); goto("grammarDetail"); };
+  const openTopic = (topic) => {
+    setSelectedTopic(topic);
+    setReadTopics((prev) => (prev[topic.id] ? prev : { ...prev, [topic.id]: true }));
+    goto("grammarDetail");
+  };
+  const readTopicCount = Object.keys(readTopics).length;
+  const hasReadAnyTopic = readTopicCount > 0;
   const openCategory = (idx) => { setCatIndex(idx); setCardPos(0); setDeckOrder(null); setFlipped(false); goto("vocabDeck"); };
 
   const markKnown = (id) => { setKnownWords((prev) => ({ ...prev, [id]: true })); setLearningWords((prev) => { const n = { ...prev }; delete n[id]; return n; }); };
   const markLearning = (id) => { setLearningWords((prev) => ({ ...prev, [id]: true })); setKnownWords((prev) => { const n = { ...prev }; delete n[id]; return n; }); };
 
   const currentDeckIndices = (cat) => deckOrder || cat.words.map((_, i) => i);
-  const nextCard = () => { setFlipped(false); const cat = VOCAB_CATEGORIES[catIndex]; setCardPos((i) => (i + 1) % cat.words.length); };
-  const prevCard = () => { setFlipped(false); const cat = VOCAB_CATEGORIES[catIndex]; setCardPos((i) => (i - 1 + cat.words.length) % cat.words.length); };
+  const nextCard = () => { setFlipped(false); const cat = vocabCategories[catIndex]; setCardPos((i) => (i + 1) % cat.words.length); };
+  const prevCard = () => { setFlipped(false); const cat = vocabCategories[catIndex]; setCardPos((i) => (i - 1 + cat.words.length) % cat.words.length); };
   const toggleShuffleDeck = () => {
-    const cat = VOCAB_CATEGORIES[catIndex];
+    const cat = vocabCategories[catIndex];
     if (deckOrder) { setDeckOrder(null); setCardPos(0); }
     else { setDeckOrder(shuffle(cat.words.map((_, i) => i))); setCardPos(0); }
     setFlipped(false);
   };
 
+  const isSingleTopicFilter = GRAMMAR_TOPICS.some((t) => t.id === quizFilter);
   const startQuiz = () => {
+    if (quizFilter !== "vocab" && !isSingleTopicFilter && !hasReadAnyTopic) return; // khoá: chưa đọc lý thuyết nào
     let pool = [];
-    if (quizFilter === "all") pool = [...buildVocabPool(), ...buildGrammarPool()];
-    else if (quizFilter === "vocab") pool = buildVocabPool();
-    else pool = buildGrammarPool();
+    if (isSingleTopicFilter) pool = buildGrammarPool(readTopics, quizFilter, customQuestions);
+    else if (quizFilter === "all") pool = [...buildVocabPool(vocabCategories), ...buildGrammarPool(readTopics, null, customQuestions)];
+    else if (quizFilter === "vocab") pool = buildVocabPool(vocabCategories);
+    else pool = buildGrammarPool(readTopics, null, customQuestions);
+    if (pool.length === 0) return;
     const picked = shuffle(pool).slice(0, Math.min(quizCount, pool.length));
     setQuizQuestions(picked); setQuizIndex(0); setQuizAnswers([]); setSelectedOption(null); setQuizStage("active");
   };
@@ -695,7 +1241,7 @@ function StudyApp({ studentName, onSwitchUser }) {
   };
   const resetQuiz = () => { setQuizStage("setup"); setQuizIndex(0); setQuizAnswers([]); setSelectedOption(null); setNameSaved(false); };
 
-  const cat = VOCAB_CATEGORIES[catIndex];
+  const cat = vocabCategories[catIndex];
   const orderedIdx = currentDeckIndices(cat);
   const word = cat.words[orderedIdx[cardPos]];
 
@@ -713,7 +1259,10 @@ function StudyApp({ studentName, onSwitchUser }) {
             <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, color: T.textSoft, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
               <span>TỪ ĐÃ THUỘC: {totalWordsSeen}</span>
               <span>ĐIỂM CAO: {bestScore ?? "—"}</span>
-              <button onClick={onSwitchUser} title="Đổi người dùng" style={{ display: "flex", alignItems: "center", gap: 4, background: T.primarySoft, color: T.primaryDeep, border: "none", borderRadius: 999, padding: "4px 10px", cursor: "pointer", fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, fontWeight: 600 }}>
+              <span title="Mã đồng bộ — nhập mã này trên thiết bị khác để đồng bộ tiến độ" style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: T.textSoft, letterSpacing: "0.02em" }}>
+                {studentKey}
+              </span>
+              <button onClick={onSwitchUser} title="Đổi người dùng / thiết bị" style={{ display: "flex", alignItems: "center", gap: 4, background: T.primarySoft, color: T.primaryDeep, border: "none", borderRadius: 999, padding: "4px 10px", cursor: "pointer", fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, fontWeight: 600 }}>
                 <UserIcon size={12} /> {studentName}
               </button>
             </div>
@@ -730,20 +1279,21 @@ function StudyApp({ studentName, onSwitchUser }) {
       </header>
 
       <main style={{ maxWidth: 1040, margin: "0 auto", padding: "32px 24px 72px" }}>
-        {view === "home" && <HomeView goto={goto} totalWordsSeen={totalWordsSeen} bestScore={bestScore} openTopic={openTopic} />}
+        {view === "home" && <HomeView goto={goto} totalWordsSeen={totalWordsSeen} bestScore={bestScore} openTopic={openTopic} vocabCount={vocabCategories.length} />}
         {view === "overview" && <OverviewView />}
-        {view === "grammar" && <GrammarListView onOpen={openTopic} />}
+        {view === "grammar" && <GrammarListView onOpen={openTopic} readTopics={readTopics} />}
         {view === "grammarDetail" && selectedTopic && (
-          <GrammarDetailView topic={selectedTopic} onBack={() => goto("grammar")} onQuiz={() => { resetQuiz(); setQuizFilter("grammar"); goto("quiz"); }} />
+          <GrammarDetailView topic={selectedTopic} onBack={() => goto("grammar")} onQuiz={() => { resetQuiz(); setQuizFilter(selectedTopic.id); goto("quiz"); }} />
         )}
-        {view === "vocab" && <VocabHubView onOpen={openCategory} knownWords={knownWords} />}
+        {view === "vocab" && <VocabHubView onOpen={openCategory} knownWords={knownWords} vocabCategories={vocabCategories} />}
         {view === "vocabDeck" && (
           <VocabDeckView category={cat} word={word} cardPos={cardPos} flipped={flipped} setFlipped={setFlipped}
             onNext={nextCard} onPrev={prevCard} onBack={() => goto("vocab")} markKnown={markKnown} markLearning={markLearning}
             knownWords={knownWords} learningWords={learningWords} isShuffled={!!deckOrder} onToggleShuffle={toggleShuffleDeck} />
         )}
         {view === "quiz" && quizStage === "setup" && (
-          <QuizSetupView quizFilter={quizFilter} setQuizFilter={setQuizFilter} quizCount={quizCount} setQuizCount={setQuizCount} onStart={startQuiz} />
+          <QuizSetupView quizFilter={quizFilter} setQuizFilter={setQuizFilter} quizCount={quizCount} setQuizCount={setQuizCount}
+            onStart={startQuiz} readTopics={readTopics} hasReadAnyTopic={hasReadAnyTopic} onGoGrammar={() => goto("grammar")} customQuestions={customQuestions} />
         )}
         {view === "quiz" && quizStage === "active" && quizQuestions.length > 0 && (
           <QuizActiveView question={quizQuestions[quizIndex]} index={quizIndex} total={quizQuestions.length}
@@ -755,6 +1305,9 @@ function StudyApp({ studentName, onSwitchUser }) {
             onSave={saveScore} onRetry={resetQuiz} onLeaderboard={() => goto("leaderboard")} />
         )}
         {view === "leaderboard" && <LeaderboardView leaderboard={leaderboard} />}
+        {view === "admin" && (
+          <AdminView unlocked={adminUnlocked} onUnlock={() => setAdminUnlocked(true)} customQuestions={customQuestions} customVocab={customVocab} />
+        )}
       </main>
 
       <footer style={{ borderTop: `1px solid ${T.border}`, padding: "20px 24px", textAlign: "center", color: T.textSoft, fontSize: 13 }}>
@@ -765,7 +1318,7 @@ function StudyApp({ studentName, onSwitchUser }) {
 }
 
 /* ============================== HOME ============================== */
-function HomeView({ goto, totalWordsSeen, bestScore, openTopic }) {
+function HomeView({ goto, totalWordsSeen, bestScore, openTopic, vocabCount }) {
   return (
     <div>
       <section style={cardStyle({ padding: "36px 32px", marginBottom: 32 })}>
@@ -786,7 +1339,7 @@ function HomeView({ goto, totalWordsSeen, bestScore, openTopic }) {
         <StatCard icon={Layers} label="Từ đã thuộc" value={totalWordsSeen} />
         <StatCard icon={Target} label="Điểm cao nhất" value={bestScore ?? "—"} />
         <StatCard icon={BookOpen} label="Chủ điểm ngữ pháp" value={GRAMMAR_TOPICS.length} />
-        <StatCard icon={Flame} label="Bộ từ vựng" value={VOCAB_CATEGORIES.length} />
+        <StatCard icon={Flame} label="Bộ từ vựng" value={vocabCount} />
       </div>
 
       <SectionEyebrow>Ngữ pháp nổi bật</SectionEyebrow>
@@ -805,14 +1358,19 @@ function StatCard({ icon: Icon, label, value }) {
     </div>
   );
 }
-function TopicCard({ topic, onClick }) {
+function TopicCard({ topic, onClick, isRead }) {
   return (
-    <button className="card-hover" onClick={onClick} style={{ textAlign: "left", ...cardStyle({ padding: 16 }), cursor: "pointer", display: "flex", gap: 12, alignItems: "flex-start" }}>
+    <button className="card-hover" onClick={onClick} style={{ textAlign: "left", ...cardStyle({ padding: 16 }), cursor: "pointer", display: "flex", gap: 12, alignItems: "flex-start", position: "relative" }}>
+      {isRead && (
+        <div style={{ position: "absolute", top: 12, right: 12 }}>
+          <Badge tone="success"><Check size={11} /> Đã đọc</Badge>
+        </div>
+      )}
       <div style={{ width: 36, height: 36, borderRadius: 8, background: T.primarySoft, color: T.primaryDeep,
         display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
         {topic.code}
       </div>
-      <div>
+      <div style={{ paddingRight: isRead ? 74 : 0 }}>
         <div style={{ fontWeight: 700, fontSize: 16.5 }}>{topic.title}</div>
         <div style={{ fontSize: 12, color: T.primary, fontFamily: "'IBM Plex Mono', monospace", marginBottom: 6 }}>{topic.subtitle}</div>
         <div style={{ fontSize: 13.5, color: T.textSoft, lineHeight: 1.5 }}>{topic.summary.slice(0, 78)}…</div>
@@ -873,14 +1431,31 @@ function OverviewView() {
 }
 
 /* ============================== GRAMMAR ============================== */
-function GrammarListView({ onOpen }) {
+function GrammarListView({ onOpen, readTopics }) {
+  const readCount = Object.keys(readTopics || {}).length;
   return (
     <div>
       <SectionEyebrow>Sổ tay ngữ pháp</SectionEyebrow>
-      <h2 style={{ fontSize: 27, fontWeight: 800, margin: "0 0 20px", letterSpacing: "-0.01em" }}>Chọn một chủ điểm để bắt đầu</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
-        {GRAMMAR_TOPICS.map((t) => <TopicCard key={t.id} topic={t} onClick={() => onOpen(t)} />)}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 27, fontWeight: 800, margin: 0, letterSpacing: "-0.01em" }}>Chọn một chủ điểm để bắt đầu</h2>
+        <Badge tone={readCount === GRAMMAR_TOPICS.length ? "success" : "neutral"}>
+          Đã đọc {readCount}/{GRAMMAR_TOPICS.length} chủ điểm
+        </Badge>
       </div>
+      <p style={{ fontSize: 13.5, color: T.textSoft, marginTop: -10, marginBottom: 20, maxWidth: 560 }}>
+        Đọc xong một chủ điểm, các câu hỏi ngữ pháp của chủ điểm đó sẽ được mở khoá trong phần Luyện tập.
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
+        {GRAMMAR_TOPICS.map((t) => <TopicCard key={t.id} topic={t} onClick={() => onOpen(t)} isRead={!!(readTopics && readTopics[t.id])} />)}
+      </div>
+    </div>
+  );
+}
+function StructureRow({ label, formula }) {
+  return (
+    <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, padding: "8px 12px" }}>
+      <div style={{ fontSize: 11, color: T.textSoft, marginBottom: 2 }}>{label}</div>
+      <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 600, color: T.text }}>{formula}</div>
     </div>
   );
 }
@@ -906,6 +1481,69 @@ function GrammarDetailView({ topic, onBack, onQuiz }) {
             borderRadius: 8, background: T.primarySoft, color: T.primaryDeep }}>{s}</span>
         ))}
       </div>
+
+      {(topic.tenseDetails || topic.points) && (
+        <>
+          <SectionEyebrow>{topic.tenseDetails ? "Chi tiết từng thì" : "Nội dung chi tiết"}</SectionEyebrow>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
+            {(topic.tenseDetails || topic.points).map((t, i) => (
+              <div key={i} style={cardStyle({ padding: "18px 20px" })}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+                  <div style={{ fontWeight: 700, fontSize: 16.5 }}>{t.name}</div>
+                  {t.enName && <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12.5, color: T.primary }}>{t.enName}</div>}
+                </div>
+                {t.definition && (
+                  <p style={{ fontSize: 13.5, lineHeight: 1.6, color: T.textSoft, margin: "0 0 12px" }}>{t.definition}</p>
+                )}
+                {t.usage && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: T.textSoft, marginBottom: 6 }}>Cách dùng</div>
+                    <ul style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 3 }}>
+                      {t.usage.map((u, k) => (
+                        <li key={k} style={{ fontSize: 13.5, lineHeight: 1.55, color: T.text }}>{u}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {t.structure && (
+                  <>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: T.textSoft, marginBottom: 6 }}>Cấu trúc câu</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 8, marginBottom: 12 }}>
+                      {t.structure.formula ? (
+                        <StructureRow label="Công thức" formula={t.structure.formula} />
+                      ) : (
+                        <>
+                          <StructureRow label="Khẳng định" formula={t.structure.aff} />
+                          <StructureRow label="Phủ định" formula={t.structure.neg} />
+                          <StructureRow label="Nghi vấn" formula={t.structure.ques} />
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+                {t.signals && (
+                  <>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: T.textSoft, marginBottom: 6 }}>Dấu hiệu nhận biết</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                      {t.signals.map((s, j) => (
+                        <span key={j} style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11.5, padding: "4px 10px",
+                          borderRadius: 999, background: T.bg, border: `1px solid ${T.border}`, color: T.textSoft }}>{s}</span>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {t.example && (
+                  <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 10 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{t.example.en}</div>
+                    <div style={{ color: T.textSoft, fontSize: 13.5 }}>{t.example.vi}</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
       <SectionEyebrow>Ví dụ</SectionEyebrow>
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
         {topic.examples.map((ex, i) => (
@@ -921,13 +1559,13 @@ function GrammarDetailView({ topic, onBack, onQuiz }) {
 }
 
 /* ============================== VOCABULARY ============================== */
-function VocabHubView({ onOpen, knownWords }) {
+function VocabHubView({ onOpen, knownWords, vocabCategories }) {
   return (
     <div>
       <SectionEyebrow>Bộ thẻ từ vựng</SectionEyebrow>
       <h2 style={{ fontSize: 27, fontWeight: 800, margin: "0 0 20px", letterSpacing: "-0.01em" }}>Chọn một chủ đề để luyện flashcard</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 14 }}>
-        {VOCAB_CATEGORIES.map((c, idx) => {
+        {vocabCategories.map((c, idx) => {
           const known = c.words.filter((w) => knownWords[`${c.id}-${w.en}`]).length;
           const pct = Math.round((known / c.words.length) * 100);
           return (
@@ -1004,23 +1642,50 @@ function VocabDeckView({ category, word, cardPos, flipped, setFlipped, onNext, o
 }
 
 /* ============================== QUIZ ============================== */
-function QuizSetupView({ quizFilter, setQuizFilter, quizCount, setQuizCount, onStart }) {
+function QuizSetupView({ quizFilter, setQuizFilter, quizCount, setQuizCount, onStart, readTopics, hasReadAnyTopic, onGoGrammar, customQuestions }) {
   const filters = [{ id: "all", label: "Tất cả" }, { id: "grammar", label: "Ngữ pháp" }, { id: "vocab", label: "Từ vựng" }];
   const counts = [5, 10, 15, 20];
+  const readCount = Object.keys(readTopics || {}).length;
+  const activeTopic = GRAMMAR_TOPICS.find((t) => t.id === quizFilter);
+  const isSingleTopicFilter = !!activeTopic;
+  const grammarPoolLen = isSingleTopicFilter
+    ? buildGrammarPool(readTopics, quizFilter, customQuestions).length
+    : buildGrammarPool(readTopics, null, customQuestions).length;
+  const isLocked = !isSingleTopicFilter && quizFilter !== "vocab" && !hasReadAnyTopic;
   return (
     <div>
       <SectionEyebrow>Phòng luyện tập</SectionEyebrow>
-      <h2 style={{ fontSize: 27, fontWeight: 800, margin: "0 0 20px", letterSpacing: "-0.01em" }}>Thiết lập bài luyện tập</h2>
+      <h2 style={{ fontSize: 27, fontWeight: 800, margin: "0 0 20px", letterSpacing: "-0.01em" }}>
+        {isSingleTopicFilter ? `Bài tập: ${activeTopic.title}` : "Thiết lập bài luyện tập"}
+      </h2>
       <div style={cardStyle({ padding: 24, maxWidth: 480 })}>
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontWeight: 700, marginBottom: 10, fontSize: 14 }}>Nội dung</div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {filters.map((f) => (
-              <button key={f.id} onClick={() => setQuizFilter(f.id)} className="app-btn" style={{ padding: "8px 16px", borderRadius: 9,
-                border: `1.5px solid ${quizFilter === f.id ? T.primary : T.border}`, background: quizFilter === f.id ? T.primary : "#fff",
-                color: quizFilter === f.id ? "#fff" : T.text, fontWeight: 600, fontSize: 13.5, cursor: "pointer" }}>{f.label}</button>
-            ))}
-          </div>
+          {isSingleTopicFilter ? (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ padding: "8px 16px", borderRadius: 9, border: `1.5px solid ${T.primary}`, background: T.primary,
+                color: "#fff", fontWeight: 600, fontSize: 13.5 }}>{activeTopic.title}</span>
+              <button className="app-btn" onClick={() => setQuizFilter("all")} style={{ padding: "8px 14px", borderRadius: 9,
+                border: `1.5px solid ${T.border}`, background: "#fff", color: T.textSoft, fontWeight: 600, fontSize: 12.5, cursor: "pointer" }}>
+                Đổi sang bài tổng hợp
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {filters.map((f) => (
+                <button key={f.id} onClick={() => setQuizFilter(f.id)} className="app-btn" style={{ padding: "8px 16px", borderRadius: 9,
+                  border: `1.5px solid ${quizFilter === f.id ? T.primary : T.border}`, background: quizFilter === f.id ? T.primary : "#fff",
+                  color: quizFilter === f.id ? "#fff" : T.text, fontWeight: 600, fontSize: 13.5, cursor: "pointer" }}>{f.label}</button>
+              ))}
+            </div>
+          )}
+          {quizFilter !== "vocab" && (
+            <div style={{ fontSize: 12.5, color: T.textSoft, marginTop: 10, fontFamily: "'IBM Plex Mono', monospace" }}>
+              {isSingleTopicFilter
+                ? `${grammarPoolLen} câu hỏi của chủ điểm này`
+                : `Đã đọc ${readCount}/${GRAMMAR_TOPICS.length} chủ điểm · ${grammarPoolLen} câu ngữ pháp đã mở khoá`}
+            </div>
+          )}
         </div>
         <div style={{ marginBottom: 24 }}>
           <div style={{ fontWeight: 700, marginBottom: 10, fontSize: 14 }}>Số câu hỏi</div>
@@ -1032,7 +1697,25 @@ function QuizSetupView({ quizFilter, setQuizFilter, quizCount, setQuizCount, onS
             ))}
           </div>
         </div>
-        <button className="app-btn" onClick={onStart} style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center" }}>Bắt đầu làm bài <ChevronRight size={16} /></button>
+
+        {isLocked ? (
+          <div>
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-start", background: T.dangerSoft, border: `1px solid ${T.danger}`,
+              borderRadius: 10, padding: "12px 14px", marginBottom: 14 }}>
+              <Info size={17} color={T.danger} style={{ flexShrink: 0, marginTop: 1 }} />
+              <div style={{ fontSize: 13.5, color: T.danger, lineHeight: 1.5 }}>
+                Bạn cần đọc ít nhất 1 chủ điểm ngữ pháp trước khi làm bài luyện tập nội dung này.
+              </div>
+            </div>
+            <button className="app-btn" onClick={onGoGrammar} style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center" }}>
+              Đọc lý thuyết ngay <ChevronRight size={16} />
+            </button>
+          </div>
+        ) : (
+          <button className="app-btn" onClick={onStart} style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center" }}>
+            Bắt đầu làm bài <ChevronRight size={16} />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1159,8 +1842,433 @@ function LeaderboardView({ leaderboard }) {
   );
 }
 
+function AdminView({ unlocked, onUnlock, customQuestions, customVocab }) {
+  const [pwInput, setPwInput] = useState("");
+  const [pwError, setPwError] = useState(false);
+  const [tab, setTab] = useState("grammar"); // grammar | vocab
+  const [form, setForm] = useState({ topic: GRAMMAR_TOPICS[0].id, prompt: "", opt0: "", opt1: "", opt2: "", opt3: "", correct: 0 });
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+
+  const [uploadStatus, setUploadStatus] = useState("idle"); // idle | reading | done | error
+  const [uploadResult, setUploadResult] = useState(null); // { added, skipped: [{row, reason}] }
+  const [uploadFileName, setUploadFileName] = useState("");
+
+  const [vocabForm, setVocabForm] = useState({ category: VOCAB_CATEGORIES[0].id, en: "", vi: "", ex: "" });
+  const [vocabSaving, setVocabSaving] = useState(false);
+  const [vocabSaveMsg, setVocabSaveMsg] = useState("");
+  const [vocabUploadStatus, setVocabUploadStatus] = useState("idle");
+  const [vocabUploadResult, setVocabUploadResult] = useState(null);
+  const [vocabUploadFileName, setVocabUploadFileName] = useState("");
+
+  const handleBulkFile = (file) => {
+    if (!file) return;
+    setUploadFileName(file.name);
+    setUploadStatus("reading");
+    setUploadResult(null);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: "array" });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+        const dataRows = rows.slice(2); // skip header row + example row
+
+        const updates = {};
+        const skipped = [];
+        let added = 0;
+
+        dataRows.forEach((row, i) => {
+          const rowNum = i + 3;
+          const [topicTitle, prompt, a, b, c, d, correctLetter] = row.map((v) => String(v ?? "").trim());
+          if (!prompt && !topicTitle) return;
+
+          if (!prompt || !a || !b || !c || !d || !correctLetter) {
+            skipped.push({ row: rowNum, reason: "Thiếu thông tin (câu hỏi/đáp án/đáp án đúng)" });
+            return;
+          }
+          const topicId = TOPIC_TITLE_TO_ID[topicTitle] || null;
+          if (!topicId) {
+            skipped.push({ row: rowNum, reason: `Chủ điểm "${topicTitle}" không khớp danh sách có sẵn` });
+            return;
+          }
+          const letterIdx = { A: 0, B: 1, C: 2, D: 3 }[correctLetter.toUpperCase()];
+          if (letterIdx === undefined) {
+            skipped.push({ row: rowNum, reason: `Đáp án đúng "${correctLetter}" không hợp lệ (cần A/B/C/D)` });
+            return;
+          }
+
+          const key = db.ref("content/customGrammarQuestions").push().key;
+          updates[key] = { topic: topicId, prompt, options: [a, b, c, d], correct: letterIdx };
+          added++;
+        });
+
+        if (added > 0) {
+          db.ref("content/customGrammarQuestions").update(updates).then(() => {
+            setUploadStatus("done");
+            setUploadResult({ added, skipped });
+          }).catch(() => setUploadStatus("error"));
+        } else {
+          setUploadStatus("done");
+          setUploadResult({ added: 0, skipped });
+        }
+      } catch (err) {
+        setUploadStatus("error");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleVocabBulkFile = (file) => {
+    if (!file) return;
+    setVocabUploadFileName(file.name);
+    setVocabUploadStatus("reading");
+    setVocabUploadResult(null);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: "array" });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+        const dataRows = rows.slice(2); // bỏ dòng tiêu đề + dòng ví dụ
+
+        const updates = {};
+        const skipped = [];
+        let added = 0;
+
+        dataRows.forEach((row, i) => {
+          const rowNum = i + 3;
+          const [categoryTitle, en, vi, ex] = row.map((v) => String(v ?? "").trim());
+          if (!en && !categoryTitle) return;
+
+          if (!categoryTitle || !en || !vi) {
+            skipped.push({ row: rowNum, reason: "Thiếu thông tin (chủ đề/từ tiếng Anh/nghĩa tiếng Việt)" });
+            return;
+          }
+          const categoryId = VOCAB_CATEGORY_TITLE_TO_ID[categoryTitle] || null;
+          if (!categoryId) {
+            skipped.push({ row: rowNum, reason: `Chủ đề "${categoryTitle}" không khớp danh sách có sẵn` });
+            return;
+          }
+          const key = db.ref("content/customVocab").push().key;
+          updates[key] = { category: categoryId, en, vi, ex: ex || "" };
+          added++;
+        });
+
+        if (added > 0) {
+          db.ref("content/customVocab").update(updates).then(() => {
+            setVocabUploadStatus("done");
+            setVocabUploadResult({ added, skipped });
+          }).catch(() => setVocabUploadStatus("error"));
+        } else {
+          setVocabUploadStatus("done");
+          setVocabUploadResult({ added: 0, skipped });
+        }
+      } catch (err) {
+        setVocabUploadStatus("error");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const submitVocabWord = async () => {
+    if (!vocabForm.en.trim() || !vocabForm.vi.trim()) {
+      setVocabSaveMsg("Điền đầy đủ từ tiếng Anh và nghĩa tiếng Việt trước khi lưu.");
+      return;
+    }
+    setVocabSaving(true);
+    try {
+      await db.ref("content/customVocab").push({
+        category: vocabForm.category, en: vocabForm.en.trim(), vi: vocabForm.vi.trim(), ex: vocabForm.ex.trim(),
+      });
+      setVocabForm({ category: vocabForm.category, en: "", vi: "", ex: "" });
+      setVocabSaveMsg("Đã thêm từ mới!");
+    } catch (e) {
+      setVocabSaveMsg("Có lỗi khi lưu, thử lại nhé.");
+    }
+    setVocabSaving(false);
+    setTimeout(() => setVocabSaveMsg(""), 2500);
+  };
+
+  const deleteVocabWord = (key) => {
+    if (window.confirm("Xoá từ này?")) db.ref(`content/customVocab/${key}`).remove();
+  };
+
+  const tryUnlock = () => {
+    if (pwInput === ADMIN_PASSWORD) { onUnlock(); setPwError(false); }
+    else setPwError(true);
+  };
+
+  const submitQuestion = async () => {
+    const opts = [form.opt0, form.opt1, form.opt2, form.opt3];
+    if (!form.prompt.trim() || opts.some((o) => !o.trim())) {
+      setSaveMsg("Điền đầy đủ câu hỏi và 4 đáp án trước khi lưu.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await db.ref("content/customGrammarQuestions").push({
+        topic: form.topic, prompt: form.prompt.trim(), options: opts.map((o) => o.trim()), correct: Number(form.correct),
+      });
+      setForm({ topic: form.topic, prompt: "", opt0: "", opt1: "", opt2: "", opt3: "", correct: 0 });
+      setSaveMsg("Đã thêm câu hỏi mới!");
+    } catch (e) {
+      setSaveMsg("Có lỗi khi lưu, thử lại nhé.");
+    }
+    setSaving(false);
+    setTimeout(() => setSaveMsg(""), 2500);
+  };
+
+  const deleteQuestion = (key) => {
+    if (window.confirm("Xoá câu hỏi này?")) db.ref(`content/customGrammarQuestions/${key}`).remove();
+  };
+
+  if (!unlocked) {
+    return (
+      <div>
+        <SectionEyebrow>Khu vực quản trị</SectionEyebrow>
+        <h2 style={{ fontSize: 27, fontWeight: 800, margin: "0 0 20px", letterSpacing: "-0.01em" }}>Đăng nhập Admin</h2>
+        <div style={cardStyle({ padding: 24, maxWidth: 380 })}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, color: T.textSoft }}>
+            <Lock size={18} />
+            <span style={{ fontSize: 13.5 }}>Nhập mật khẩu quản trị để thêm/xoá câu hỏi.</span>
+          </div>
+          <input type="password" value={pwInput} onChange={(e) => setPwInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && tryUnlock()} placeholder="Mật khẩu admin"
+            style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1.5px solid ${pwError ? T.danger : T.border}`,
+              fontSize: 14, marginBottom: 10, boxSizing: "border-box" }} />
+          {pwError && <div style={{ color: T.danger, fontSize: 12.5, marginBottom: 10 }}>Sai mật khẩu, thử lại nhé.</div>}
+          <button className="app-btn" onClick={tryUnlock} style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center" }}>
+            Đăng nhập
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const customList = Object.entries(customQuestions || {}).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  const customVocabList = Object.entries(customVocab || {}).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+
+  return (
+    <div>
+      <SectionEyebrow>Khu vực quản trị</SectionEyebrow>
+      <h2 style={{ fontSize: 27, fontWeight: 800, margin: "0 0 16px", letterSpacing: "-0.01em" }}>Cập nhật nội dung học</h2>
+
+      <div style={{ display: "flex", gap: 6, marginBottom: 24 }}>
+        <button onClick={() => setTab("grammar")} className="app-btn" style={{
+          padding: "9px 16px", borderRadius: 9, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13.5,
+          background: tab === "grammar" ? T.text : "transparent", color: tab === "grammar" ? "#fff" : T.textSoft }}>
+          Câu hỏi ngữ pháp
+        </button>
+        <button onClick={() => setTab("vocab")} className="app-btn" style={{
+          padding: "9px 16px", borderRadius: 9, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13.5,
+          background: tab === "vocab" ? T.text : "transparent", color: tab === "vocab" ? "#fff" : T.textSoft }}>
+          Từ vựng
+        </button>
+      </div>
+
+      {tab === "grammar" && (
+        <>
+          <div style={cardStyle({ padding: 24, maxWidth: 560, marginBottom: 28 })}>
+            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Tải câu hỏi lên hàng loạt từ file Excel</div>
+            <div style={{ fontSize: 13, color: T.textSoft, marginBottom: 14, lineHeight: 1.5 }}>
+              Soạn nhiều câu hỏi theo file mẫu (chủ điểm, câu hỏi, 4 đáp án, đáp án đúng), rồi tải file lên đây một lần.
+            </div>
+            <label htmlFor="bulkFileInput" style={{
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
+              border: `2px dashed ${T.border}`, borderRadius: 10, padding: "24px 16px", cursor: "pointer", textAlign: "center",
+            }}>
+              <Upload size={22} color={T.primary} />
+              <div style={{ fontWeight: 600, fontSize: 14 }}>Bấm để chọn file Excel (.xlsx)</div>
+              <div style={{ fontSize: 12.5, color: T.textSoft }}>{uploadFileName || "Chưa chọn file nào"}</div>
+            </label>
+            <input id="bulkFileInput" type="file" accept=".xlsx,.xls" style={{ display: "none" }}
+              onChange={(e) => handleBulkFile(e.target.files[0])} />
+
+            {uploadStatus === "reading" && <div style={{ marginTop: 12, fontSize: 13, color: T.textSoft }}>Đang đọc file…</div>}
+            {uploadStatus === "error" && <div style={{ marginTop: 12, fontSize: 13, color: T.danger }}>Không đọc được file. Kiểm tra đúng định dạng .xlsx và đúng cấu trúc mẫu.</div>}
+            {uploadStatus === "done" && uploadResult && (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5, color: uploadResult.added > 0 ? T.success : T.danger, marginBottom: 8 }}>
+                  {uploadResult.added > 0 ? `✓ Đã thêm ${uploadResult.added} câu hỏi mới` : "Không có câu hỏi nào được thêm"}
+                </div>
+                {uploadResult.skipped.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {uploadResult.skipped.map((s, i) => (
+                      <div key={i} style={{ fontSize: 12.5, color: T.textSoft }}>
+                        <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Dòng {s.row}:</span> {s.reason}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div style={cardStyle({ padding: 24, maxWidth: 560, marginBottom: 28 })}>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: T.textSoft, marginBottom: 6 }}>Chủ điểm</div>
+              <select value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value })}
+                style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: `1.5px solid ${T.border}`, fontSize: 14, boxSizing: "border-box" }}>
+                {GRAMMAR_TOPICS.map((t) => <option key={t.id} value={t.id}>{t.title} ({t.subtitle})</option>)}
+              </select>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: T.textSoft, marginBottom: 6 }}>Câu hỏi</div>
+              <textarea value={form.prompt} onChange={(e) => setForm({ ...form, prompt: e.target.value })} rows={2}
+                placeholder="Ví dụ: She ___ to the office every day."
+                style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: `1.5px solid ${T.border}`, fontSize: 14, fontFamily: "inherit", boxSizing: "border-box", resize: "vertical" }} />
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: T.textSoft, marginBottom: 6 }}>4 đáp án (chọn nút tròn cho đáp án đúng)</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <input type="radio" name="correctOpt" checked={form.correct === i} onChange={() => setForm({ ...form, correct: i })} />
+                    <input type="text" value={form[`opt${i}`]} onChange={(e) => setForm({ ...form, [`opt${i}`]: e.target.value })}
+                      placeholder={`Đáp án ${i + 1}`}
+                      style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${T.border}`, fontSize: 13.5, boxSizing: "border-box" }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <button className="app-btn" onClick={submitQuestion} disabled={saving}
+              style={{ ...primaryBtnStyle(), justifyContent: "center", opacity: saving ? 0.6 : 1 }}>
+              <Plus size={16} /> {saving ? "Đang lưu..." : "Thêm câu hỏi"}
+            </button>
+            {saveMsg && <div style={{ marginTop: 10, fontSize: 13, color: saveMsg.includes("lỗi") || saveMsg.includes("Điền") ? T.danger : T.success }}>{saveMsg}</div>}
+          </div>
+
+          <SectionEyebrow>Câu hỏi đã thêm ({customList.length})</SectionEyebrow>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+            {customList.length === 0 && <div style={{ color: T.textSoft, fontSize: 13.5 }}>Chưa có câu hỏi tuỳ chỉnh nào.</div>}
+            {customList.map(([key, q]) => {
+              const topicTitle = GRAMMAR_TOPICS.find((t) => t.id === q.topic)?.title || q.topic;
+              return (
+                <div key={key} style={cardStyle({ padding: "14px 16px", maxWidth: 560, display: "flex", justifyContent: "space-between", gap: 10 })}>
+                  <div>
+                    <Badge tone="neutral">{topicTitle}</Badge>
+                    <div style={{ fontWeight: 600, fontSize: 14, margin: "8px 0 4px" }}>{q.prompt}</div>
+                    <div style={{ fontSize: 12.5, color: T.textSoft }}>
+                      Đáp án đúng: <strong style={{ color: T.success }}>{q.options[q.correct]}</strong>
+                    </div>
+                  </div>
+                  <button onClick={() => deleteQuestion(key)} title="Xoá"
+                    style={{ background: "none", border: "none", cursor: "pointer", color: T.danger, flexShrink: 0, height: "fit-content" }}>
+                    <Trash size={17} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {tab === "vocab" && (
+        <>
+          <div style={cardStyle({ padding: 24, maxWidth: 560, marginBottom: 28 })}>
+            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Tải từ vựng lên hàng loạt từ file Excel</div>
+            <div style={{ fontSize: 13, color: T.textSoft, marginBottom: 14, lineHeight: 1.5 }}>
+              Soạn nhiều từ theo file mẫu (chủ đề, từ tiếng Anh, nghĩa tiếng Việt, câu ví dụ), rồi tải file lên đây một lần — cách nhanh nhất để cập nhật từ vựng thường xuyên từ bất kỳ thiết bị nào.
+            </div>
+            <label htmlFor="bulkVocabFileInput" style={{
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
+              border: `2px dashed ${T.border}`, borderRadius: 10, padding: "24px 16px", cursor: "pointer", textAlign: "center",
+            }}>
+              <Upload size={22} color={T.primary} />
+              <div style={{ fontWeight: 600, fontSize: 14 }}>Bấm để chọn file Excel (.xlsx)</div>
+              <div style={{ fontSize: 12.5, color: T.textSoft }}>{vocabUploadFileName || "Chưa chọn file nào"}</div>
+            </label>
+            <input id="bulkVocabFileInput" type="file" accept=".xlsx,.xls" style={{ display: "none" }}
+              onChange={(e) => handleVocabBulkFile(e.target.files[0])} />
+
+            {vocabUploadStatus === "reading" && <div style={{ marginTop: 12, fontSize: 13, color: T.textSoft }}>Đang đọc file…</div>}
+            {vocabUploadStatus === "error" && <div style={{ marginTop: 12, fontSize: 13, color: T.danger }}>Không đọc được file. Kiểm tra đúng định dạng .xlsx và đúng cấu trúc mẫu.</div>}
+            {vocabUploadStatus === "done" && vocabUploadResult && (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5, color: vocabUploadResult.added > 0 ? T.success : T.danger, marginBottom: 8 }}>
+                  {vocabUploadResult.added > 0 ? `✓ Đã thêm ${vocabUploadResult.added} từ mới` : "Không có từ nào được thêm"}
+                </div>
+                {vocabUploadResult.skipped.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {vocabUploadResult.skipped.map((s, i) => (
+                      <div key={i} style={{ fontSize: 12.5, color: T.textSoft }}>
+                        <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Dòng {s.row}:</span> {s.reason}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div style={cardStyle({ padding: 24, maxWidth: 560, marginBottom: 28 })}>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: T.textSoft, marginBottom: 6 }}>Chủ đề</div>
+              <select value={vocabForm.category} onChange={(e) => setVocabForm({ ...vocabForm, category: e.target.value })}
+                style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: `1.5px solid ${T.border}`, fontSize: 14, boxSizing: "border-box" }}>
+                {VOCAB_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: T.textSoft, marginBottom: 6 }}>Từ tiếng Anh</div>
+              <input type="text" value={vocabForm.en} onChange={(e) => setVocabForm({ ...vocabForm, en: e.target.value })}
+                placeholder="Ví dụ: invoice"
+                style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: `1.5px solid ${T.border}`, fontSize: 14, boxSizing: "border-box" }} />
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: T.textSoft, marginBottom: 6 }}>Nghĩa tiếng Việt</div>
+              <input type="text" value={vocabForm.vi} onChange={(e) => setVocabForm({ ...vocabForm, vi: e.target.value })}
+                placeholder="Ví dụ: hóa đơn"
+                style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: `1.5px solid ${T.border}`, fontSize: 14, boxSizing: "border-box" }} />
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: T.textSoft, marginBottom: 6 }}>Câu ví dụ (không bắt buộc)</div>
+              <input type="text" value={vocabForm.ex} onChange={(e) => setVocabForm({ ...vocabForm, ex: e.target.value })}
+                placeholder="Ví dụ: Please send the invoice by Friday."
+                style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: `1.5px solid ${T.border}`, fontSize: 14, boxSizing: "border-box" }} />
+            </div>
+            <button className="app-btn" onClick={submitVocabWord} disabled={vocabSaving}
+              style={{ ...primaryBtnStyle(), justifyContent: "center", opacity: vocabSaving ? 0.6 : 1 }}>
+              <Plus size={16} /> {vocabSaving ? "Đang lưu..." : "Thêm từ"}
+            </button>
+            {vocabSaveMsg && <div style={{ marginTop: 10, fontSize: 13, color: vocabSaveMsg.includes("lỗi") || vocabSaveMsg.includes("Điền") ? T.danger : T.success }}>{vocabSaveMsg}</div>}
+          </div>
+
+          <SectionEyebrow>Từ đã thêm ({customVocabList.length})</SectionEyebrow>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+            {customVocabList.length === 0 && <div style={{ color: T.textSoft, fontSize: 13.5 }}>Chưa có từ tuỳ chỉnh nào.</div>}
+            {customVocabList.map(([key, w]) => {
+              const categoryName = VOCAB_CATEGORIES.find((c) => c.id === w.category)?.name || w.category;
+              return (
+                <div key={key} style={cardStyle({ padding: "14px 16px", maxWidth: 560, display: "flex", justifyContent: "space-between", gap: 10 })}>
+                  <div>
+                    <Badge tone="neutral">{categoryName}</Badge>
+                    <div style={{ fontWeight: 600, fontSize: 14, margin: "8px 0 4px" }}>{w.en} — {w.vi}</div>
+                    {w.ex && <div style={{ fontSize: 12.5, color: T.textSoft, fontStyle: "italic" }}>"{w.ex}"</div>}
+                  </div>
+                  <button onClick={() => deleteVocabWord(key)} title="Xoá"
+                    style={{ background: "none", border: "none", cursor: "pointer", color: T.danger, flexShrink: 0, height: "fit-content" }}>
+                    <Trash size={17} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<RootApp />);
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
