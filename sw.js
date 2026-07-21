@@ -2,7 +2,7 @@
 // Cache "app shell" (giao diện + khung ngữ pháp/từ vựng) để mở nhanh và dùng được khi mất mạng.
 // Dữ liệu tiến độ, điểm số, câu hỏi/từ vựng do Admin thêm... vẫn cần mạng vì nằm trên Firebase.
 
-const CACHE_NAME = "toeic-study-v2";
+const CACHE_NAME = "toeic-study-v3";
 const APP_SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (event) => {

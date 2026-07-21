@@ -109,6 +109,7 @@ const Trash = (p) => <IconBase {...p}><polyline points="4 6 6 6 20 6" /><path d=
 const Plus = (p) => <IconBase {...p}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></IconBase>;
 const Shuffle = (p) => <IconBase {...p}><polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" /><polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" /><line x1="4" y1="4" x2="9" y2="9" /></IconBase>;
 const Upload = (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></IconBase>;
+const Keyboard = (p) => <IconBase {...p}><rect x="2" y="6" width="20" height="12" rx="2" /><line x1="6" y1="10" x2="6" y2="10" /><line x1="10" y1="10" x2="10" y2="10" /><line x1="14" y1="10" x2="14" y2="10" /><line x1="18" y1="10" x2="18" y2="10" /><line x1="7" y1="14" x2="17" y2="14" /></IconBase>;
 
 /* ============================== CONTENT: GRAMMAR ============================== */
 const GRAMMAR_TOPICS = [
@@ -576,6 +577,161 @@ const GRAMMAR_TOPICS = [
         structure: { formula: "N (riêng) + V-ing/V3, S + V (chính)" },
         example: { en: "The report finished, the team moved to the next task.", vi: "Báo cáo hoàn tất, nhóm chuyển sang nhiệm vụ tiếp theo." } },
     ]},
+  { id: "articles", code: "16", title: "Mạo từ", subtitle: "Articles",
+    summary: "Mạo từ a/an/the (hoặc không dùng mạo từ) đứng trước danh từ để xác định danh từ đó đã được nhắc tới hay còn chung chung. Đề thi hay bẫy giữa a/an và giữa có/không có 'the'.",
+    signals: ["a/an + danh từ số ít, chưa xác định", "the + danh từ đã xác định", "Ø (không mạo từ) + danh từ số nhiều/không đếm được, khái quát"],
+    examples: [
+      { en: "She works for a company in Hanoi.", vi: "Cô ấy làm việc cho một công ty ở Hà Nội." },
+      { en: "The company she works for is expanding.", vi: "Công ty mà cô ấy làm việc đang mở rộng." },
+      { en: "Employees must submit reports by Friday.", vi: "Nhân viên phải nộp báo cáo trước thứ Sáu." },
+    ],
+    points: [
+      { name: "Mạo từ bất định", enName: "Indefinite Article (a/an)",
+        definition: "Dùng trước danh từ đếm được số ít khi nhắc đến lần đầu hoặc mang nghĩa chung chung, không xác định cụ thể.",
+        structure: { formula: "a + phụ âm... / an + nguyên âm..." },
+        example: { en: "He is looking for an assistant.", vi: "Anh ấy đang tìm một trợ lý." } },
+      { name: "Mạo từ xác định", enName: "Definite Article (the)",
+        definition: "Dùng khi danh từ đã được nhắc đến trước đó, đã xác định rõ, hoặc là duy nhất.",
+        structure: { formula: "the + danh từ đã biết/duy nhất" },
+        example: { en: "The manager approved the budget yesterday.", vi: "Người quản lý đã duyệt ngân sách hôm qua." } },
+      { name: "Không dùng mạo từ", enName: "Zero Article",
+        definition: "Không dùng mạo từ trước danh từ số nhiều hoặc danh từ không đếm được khi nói chung chung, và trước hầu hết tên riêng.",
+        structure: { formula: "Ø + N (số nhiều/không đếm được, nghĩa khái quát)" },
+        example: { en: "Information is shared across departments.", vi: "Thông tin được chia sẻ giữa các phòng ban." } },
+      { name: "Mạo từ với danh từ chuyên biệt", enName: "Articles with Specific Nouns",
+        definition: "Một số cụm từ cố định luôn đi với 'the' (the internet, the environment) hoặc không bao giờ có mạo từ (go to work, by car).",
+        structure: { formula: "cụm từ cố định + the / Ø" },
+        example: { en: "He usually goes to work by bus.", vi: "Anh ấy thường đi làm bằng xe buýt." } },
+    ]},
+  { id: "question_types", code: "17", title: "Các loại câu hỏi", subtitle: "Question Types",
+    summary: "Câu hỏi Yes/No, câu hỏi Wh-, câu hỏi đuôi và câu hỏi gián tiếp đều đảo trợ động từ lên trước chủ ngữ (trừ câu hỏi gián tiếp giữ nguyên trật tự câu khẳng định).",
+    signals: ["Do/Does/Did + S + V?", "What/When/Where/Why/How + trợ động từ + S + V?", "..., isn't it? / ..., don't you?", "Could you tell me + mệnh đề khẳng định"],
+    examples: [
+      { en: "Does the office open on Saturdays?", vi: "Văn phòng có mở cửa vào thứ Bảy không?" },
+      { en: "Where did you submit the application?", vi: "Bạn đã nộp đơn ở đâu?" },
+      { en: "Could you tell me where the meeting room is?", vi: "Bạn có thể cho tôi biết phòng họp ở đâu không?" },
+    ],
+    points: [
+      { name: "Câu hỏi Yes/No", enName: "Yes/No Questions",
+        definition: "Đảo trợ động từ (do/does/did/is/are/have...) lên trước chủ ngữ, trả lời bằng yes/no.",
+        structure: { formula: "Trợ động từ + S + V...?" },
+        example: { en: "Have you finished the report?", vi: "Bạn đã hoàn thành báo cáo chưa?" } },
+      { name: "Câu hỏi Wh-", enName: "Wh- Questions",
+        definition: "Bắt đầu bằng từ để hỏi (what/who/when/where/why/how), theo sau là trợ động từ đảo lên trước chủ ngữ.",
+        structure: { formula: "Wh- + trợ động từ + S + V...?" },
+        example: { en: "When will the shipment arrive?", vi: "Khi nào lô hàng sẽ đến?" } },
+      { name: "Câu hỏi đuôi", enName: "Tag Questions",
+        definition: "Thêm vào cuối câu khẳng định/phủ định để xác nhận thông tin; câu chính khẳng định thì đuôi phủ định và ngược lại.",
+        structure: { formula: "Câu khẳng định, trợ động từ + not + S? / Câu phủ định, trợ động từ + S?" },
+        example: { en: "You work in marketing, don't you?", vi: "Bạn làm ở bộ phận marketing, phải không?" } },
+      { name: "Câu hỏi gián tiếp", enName: "Embedded/Indirect Questions",
+        definition: "Câu hỏi được lồng trong một câu khác (thường sau Could you tell me / Do you know...), giữ nguyên trật tự chủ ngữ - động từ như câu khẳng định, không đảo ngữ.",
+        structure: { formula: "Do you know/Could you tell me + Wh- + S + V (không đảo)" },
+        example: { en: "Do you know when the workshop starts?", vi: "Bạn có biết khi nào buổi hội thảo bắt đầu không?" } },
+    ]},
+  { id: "subject_verb_agreement", code: "18", title: "Hòa hợp chủ ngữ - động từ", subtitle: "Subject-Verb Agreement",
+    summary: "Động từ phải chia theo đúng ngôi và số của chủ ngữ thật sự trong câu, kể cả khi chủ ngữ bị tách xa động từ bởi cụm từ chêm xen hoặc là một cụm danh từ phức tạp.",
+    signals: ["each / every / neither / either + N số ít + V số ít", "one of the + N số nhiều + V số ít", "along with / together with (không đổi số của chủ ngữ)"],
+    examples: [
+      { en: "Each employee is required to attend the training.", vi: "Mỗi nhân viên đều phải tham dự buổi đào tạo." },
+      { en: "One of the machines needs repair.", vi: "Một trong số các máy cần được sửa chữa." },
+      { en: "The manager, along with two assistants, is reviewing the file.", vi: "Người quản lý, cùng với hai trợ lý, đang xem xét hồ sơ." },
+    ],
+    points: [
+      { name: "Chủ ngữ là danh từ số ít/số nhiều", enName: "Singular/Plural Subjects",
+        definition: "Chủ ngữ số ít đi với động từ số ít (thêm s/es ở thì hiện tại đơn), chủ ngữ số nhiều đi với động từ nguyên mẫu.",
+        structure: { formula: "S (số ít) + V-s/es | S (số nhiều) + V" },
+        example: { en: "The reports arrive every Monday.", vi: "Các báo cáo đến vào mỗi thứ Hai." } },
+      { name: "Each/Every/Neither/Either", enName: "Each / Every / Neither / Either",
+        definition: "Các từ này luôn đi kèm danh từ số ít và động từ chia số ít, dù mang nghĩa nhiều đối tượng.",
+        structure: { formula: "Each/Every/Neither/Either + N số ít + V-s/es" },
+        example: { en: "Every applicant needs to submit a resume.", vi: "Mỗi ứng viên cần nộp một bản sơ yếu lý lịch." } },
+      { name: "Cụm từ chêm xen", enName: "Interrupting Phrases",
+        definition: "Các cụm như (along with, together with, as well as, in addition to) không làm thay đổi số của chủ ngữ chính; động từ vẫn chia theo chủ ngữ đứng trước cụm đó.",
+        structure: { formula: "S (chính) + (along with/as well as + N khác), + V (chia theo S chính)" },
+        example: { en: "The director, as well as her staff, was invited.", vi: "Giám đốc, cùng với nhân viên của cô, đã được mời." } },
+      { name: "One of the + N số nhiều", enName: "One of the + Plural Noun",
+        definition: "Cấu trúc 'one of the + danh từ số nhiều' luôn có chủ ngữ thực sự là 'one', nên động từ chia số ít.",
+        structure: { formula: "One of the + N(s) + V số ít" },
+        example: { en: "One of the candidates has withdrawn.", vi: "Một trong các ứng viên đã rút lui." } },
+    ]},
+  { id: "noun_clauses", code: "19", title: "Mệnh đề danh ngữ", subtitle: "Noun Clauses",
+    summary: "Mệnh đề danh ngữ đóng vai trò như một danh từ trong câu (làm chủ ngữ, tân ngữ, hoặc bổ ngữ), thường bắt đầu bằng that, wh- hoặc if/whether.",
+    signals: ["that + S + V (làm chủ ngữ/tân ngữ)", "what/who/where/when/why/how + S + V", "if/whether + S + V (= có... hay không)"],
+    examples: [
+      { en: "That the project succeeded surprised everyone.", vi: "Việc dự án thành công đã khiến mọi người bất ngờ." },
+      { en: "I don't know what the client wants.", vi: "Tôi không biết khách hàng muốn gì." },
+      { en: "Please confirm whether you can attend.", vi: "Vui lòng xác nhận liệu bạn có thể tham dự hay không." } ],
+    points: [
+      { name: "Mệnh đề danh ngữ với That", enName: "Noun Clause with 'That'",
+        definition: "Dùng 'that' để dẫn một mệnh đề làm tân ngữ/chủ ngữ, thường theo sau các động từ như believe, think, know, suggest.",
+        structure: { formula: "S + V + that + S + V" },
+        example: { en: "The report shows that sales increased.", vi: "Báo cáo cho thấy doanh số đã tăng." } },
+      { name: "Mệnh đề danh ngữ với từ để hỏi", enName: "Noun Clause with Wh- words",
+        definition: "Dùng what/who/where/when/why/how để dẫn mệnh đề, giữ trật tự chủ ngữ - động từ như câu khẳng định (không đảo ngữ).",
+        structure: { formula: "S + V + Wh- + S + V" },
+        example: { en: "Nobody knows why the flight was delayed.", vi: "Không ai biết tại sao chuyến bay bị hoãn." } },
+      { name: "Mệnh đề danh ngữ với If/Whether", enName: "Noun Clause with If/Whether",
+        definition: "Dùng khi diễn tả sự nghi vấn 'có... hay không'; whether có thể theo sau là 'or not', if thì không.",
+        structure: { formula: "S + V + whether/if + S + V (+ or not)" },
+        example: { en: "I'm not sure if the store is still open.", vi: "Tôi không chắc cửa hàng có còn mở cửa không." } },
+      { name: "Chức năng trong câu", enName: "Function in the Sentence",
+        definition: "Mệnh đề danh ngữ có thể làm chủ ngữ của câu, tân ngữ của động từ, hoặc bổ ngữ sau động từ 'to be'.",
+        structure: { formula: "[That/Wh-/If mệnh đề] + V (chủ ngữ) | V + [mệnh đề] (tân ngữ)" },
+        example: { en: "What she said was completely accurate.", vi: "Điều cô ấy nói hoàn toàn chính xác." } },
+    ]},
+  { id: "adverbial_clauses", code: "20", title: "Mệnh đề trạng ngữ", subtitle: "Adverbial Clauses",
+    summary: "Mệnh đề trạng ngữ bổ nghĩa cho cả mệnh đề chính, nêu rõ thời gian, nguyên nhân, điều kiện, sự nhượng bộ..., nối bằng liên từ phụ thuộc (subordinating conjunction).",
+    signals: ["because/since/as (nguyên nhân)", "although/though/even though (nhượng bộ)", "when/while/before/after (thời gian)", "so that/in order that (mục đích)"],
+    examples: [
+      { en: "Although the budget was tight, the team finished the project.", vi: "Mặc dù ngân sách eo hẹp, nhóm vẫn hoàn thành dự án." },
+      { en: "Because the flight was delayed, she missed the meeting.", vi: "Vì chuyến bay bị hoãn, cô ấy đã lỡ cuộc họp." },
+      { en: "We left early so that we could avoid the traffic.", vi: "Chúng tôi đi sớm để có thể tránh tắc đường." },
+    ],
+    points: [
+      { name: "Mệnh đề chỉ nguyên nhân", enName: "Clauses of Reason",
+        definition: "Nối bằng because/since/as, giải thích lý do cho mệnh đề chính.",
+        structure: { formula: "Because/Since/As + S + V, S + V" },
+        example: { en: "Since the printer is broken, we need a new one.", vi: "Vì máy in bị hỏng, chúng ta cần một cái mới." } },
+      { name: "Mệnh đề chỉ sự nhượng bộ", enName: "Clauses of Concession",
+        definition: "Nối bằng although/though/even though, nêu ý tương phản với mệnh đề chính.",
+        structure: { formula: "Although/Though + S + V, S + V" },
+        example: { en: "Even though he was tired, he kept working.", vi: "Mặc dù mệt, anh ấy vẫn tiếp tục làm việc." } },
+      { name: "Mệnh đề chỉ thời gian", enName: "Clauses of Time",
+        definition: "Nối bằng when/while/before/after/as soon as, xác định thời điểm của hành động.",
+        structure: { formula: "When/While/Before/After + S + V, S + V" },
+        example: { en: "As soon as she arrives, we will start the meeting.", vi: "Ngay khi cô ấy đến, chúng ta sẽ bắt đầu cuộc họp." } },
+      { name: "Mệnh đề chỉ mục đích", enName: "Clauses of Purpose",
+        definition: "Nối bằng so that/in order that, nêu mục đích của hành động ở mệnh đề chính.",
+        structure: { formula: "S + V + so that + S + can/could/will/would + V" },
+        example: { en: "She saved the file so that others could access it.", vi: "Cô ấy lưu tệp lại để người khác có thể truy cập." } },
+    ]},
+  { id: "subjunctive", code: "21", title: "Câu giả định", subtitle: "Subjunctive Mood",
+    summary: "Câu giả định dùng động từ nguyên mẫu (bare infinitive) sau các động từ đề nghị/yêu cầu, hoặc dùng 'were' cho mọi ngôi ở câu ước/giả định không có thật.",
+    signals: ["suggest/recommend/require/demand + that + S + (should) + V nguyên mẫu", "It is important/essential that + S + V nguyên mẫu", "wish + S + were/V-ed"],
+    examples: [
+      { en: "The manager suggested that he arrive early.", vi: "Người quản lý đề nghị rằng anh ấy nên đến sớm." },
+      { en: "It is essential that every report be accurate.", vi: "Điều cần thiết là mọi báo cáo phải chính xác." },
+      { en: "If I were the manager, I would approve the request.", vi: "Nếu tôi là quản lý, tôi sẽ chấp thuận yêu cầu này." },
+    ],
+    points: [
+      { name: "Giả định sau động từ đề nghị/yêu cầu", enName: "Subjunctive after Suggest/Recommend/Require",
+        definition: "Sau các động từ suggest, recommend, require, demand, insist + that, mệnh đề sau dùng động từ nguyên mẫu (không chia theo ngôi/thì) cho mọi chủ ngữ.",
+        structure: { formula: "S + suggest/recommend/require + that + S + (should) + V nguyên mẫu" },
+        example: { en: "They recommended that she submit the form online.", vi: "Họ đề nghị cô ấy nộp đơn trực tuyến." } },
+      { name: "Giả định sau tính từ chỉ sự cần thiết", enName: "Subjunctive after Adjectives of Necessity",
+        definition: "Sau cấu trúc It is important/necessary/essential/vital that, mệnh đề sau cũng dùng động từ nguyên mẫu.",
+        structure: { formula: "It is important/necessary that + S + V nguyên mẫu" },
+        example: { en: "It is vital that the data remain confidential.", vi: "Điều quan trọng là dữ liệu phải được giữ bí mật." } },
+      { name: "Giả định với Were", enName: "Subjunctive 'Were'",
+        definition: "Trong câu điều kiện loại 2 hoặc câu ước ở hiện tại, động từ 'to be' luôn chia là 'were' cho mọi ngôi (kể cả I/he/she/it), không dùng 'was'.",
+        structure: { formula: "If S + were.../ I wish S + were..." },
+        example: { en: "If the office were closer, I would walk to work.", vi: "Nếu văn phòng gần hơn, tôi sẽ đi bộ đi làm." } },
+      { name: "Giả định với Wish", enName: "Subjunctive with Wish",
+        definition: "Wish + quá khứ đơn/quá khứ hoàn thành diễn tả điều ước trái với thực tế ở hiện tại hoặc quá khứ.",
+        structure: { formula: "S + wish + S + V-ed (hiện tại) / had + V3 (quá khứ)" },
+        example: { en: "I wish I had more time to review the contract.", vi: "Tôi ước gì mình có nhiều thời gian hơn để xem lại hợp đồng." } },
+    ]},
 ];
 
 const TOPIC_TITLE_TO_ID = GRAMMAR_TOPICS.reduce((acc, t) => { acc[t.title] = t.id; return acc; }, {});
@@ -703,6 +859,25 @@ const GRAMMAR_QUIZ = [
   { topic: "word_forms", prompt: "The manager gave a very ___ explanation.", options: ["detailed", "detail", "details", "detailing"], correct: 0 },
   { topic: "word_forms", prompt: "His decision was based on careful ___.", options: ["analysis", "analyze", "analytical", "analyzing"], correct: 0 },
   { topic: "word_forms", prompt: "The new policy had a positive ___ on morale.", options: ["effect", "affect", "effective", "effectively"], correct: 0 },
+  { topic: "word_forms", prompt: "Harbor Street will be closed for ___.", options: ["renovates", "renovate", "renovations", "renovated"], correct: 2 },
+  { topic: "word_forms", prompt: "You are required to submit the ___ by Friday.", options: ["propose", "proposes", "proposal", "proposed"], correct: 2 },
+  { topic: "word_forms", prompt: "The organization offers financial ___ to homebuyers.", options: ["assist", "assisted", "assistance", "assisting"], correct: 2 },
+  { topic: "word_forms", prompt: "All interns will be interviewed by their ___ tomorrow.", options: ["supervise", "supervisor", "supervisory", "supervised"], correct: 1 },
+  { topic: "word_forms", prompt: "You should wear goggles in the factory for your ___.", options: ["safe", "safety", "safely", "safer"], correct: 1 },
+  { topic: "word_forms", prompt: "A ___ will be delivered on Tuesday.", options: ["replace", "replaces", "replaced", "replacement"], correct: 3 },
+  { topic: "word_forms", prompt: "Please visit our Web site for more ___.", options: ["inform", "information", "informed", "informational"], correct: 1 },
+  { topic: "word_forms", prompt: "The head chef changed some recipes in ___ to customer feedback.", options: ["respond", "responsive", "response", "responded"], correct: 2 },
+  { topic: "word_forms", prompt: "Managers make ___ on business strategies.", options: ["decide", "decidedly", "decisive", "decisions"], correct: 3 },
+  { topic: "word_forms", prompt: "Bill Rice is renowned for his ___ in the technology industry.", options: ["accomplish", "accomplishing", "accomplishes", "accomplishments"], correct: 3 },
+  { topic: "word_forms", prompt: "A ___ of homeowners prefer to have three bedrooms and two bathrooms.", options: ["major", "majority", "majored", "majoring"], correct: 1 },
+  { topic: "word_forms", prompt: "All employees will meet with their ___ to have their performance reviewed in June.", options: ["supervisors", "supervising", "supervise", "supervisory"], correct: 0 },
+  { topic: "word_forms", prompt: "Directors are updating their safety policies to ensure ___ with new environmental guidelines.", options: ["complied", "comply", "compliant", "compliance"], correct: 3 },
+  { topic: "word_forms", prompt: "This section of the street will be closed until ___ on Burrard Street has been completed.", options: ["constructs", "construction", "constructed", "constructive"], correct: 1 },
+  { topic: "word_forms", prompt: "The Israeli strawberry that can grow in desert conditions is the ___ of experimentation at Tel Aviv University.", options: ["result", "resulting", "resulted", "to result"], correct: 0 },
+  { topic: "word_forms", prompt: "Hills Coffee Inc. received ___ from their supplier that cups will be available in the colors they requested.", options: ["assurances", "assuredly", "assured", "assure"], correct: 0 },
+  { topic: "word_forms", prompt: "___ written in the mutual fund report do not reflect the opinion of the financial firm.", options: ["Reviews", "Reviewed", "Reviewable", "Reviewing"], correct: 0 },
+  { topic: "word_forms", prompt: "Del Corporation has recorded large ___ in revenue in the third quarter of the year.", options: ["gained", "gainfully", "gains", "gainful"], correct: 2 },
+  { topic: "word_forms", prompt: "In ___ to the negative feedback from its customers, Outside Steakyard has changed its entrée menu to include healthy options.", options: ["respond", "response", "responding", "responds"], correct: 1 },
   { topic: "reported_speech", prompt: "She mentioned that the meeting ___ postponed.", options: ["had been", "has been", "is", "was"], correct: 0 },
   { topic: "reported_speech", prompt: "He explained that he ___ unable to attend.", options: ["was", "is", "had been", "would be"], correct: 0 },
   { topic: "reported_speech", prompt: "They announced that prices ___ next month.", options: ["would rise", "will rise", "rose", "rise"], correct: 0 },
@@ -731,6 +906,66 @@ const GRAMMAR_QUIZ = [
   { topic: "participles", prompt: "The system, ___ last year, is now outdated.", options: ["installed", "installing", "install", "to install"], correct: 0 },
   { topic: "participles", prompt: "___ the results, the team celebrated.", options: ["Seeing", "Seen", "See", "To see"], correct: 0 },
   { topic: "participles", prompt: "The report, ___ by three departments, took weeks to complete.", options: ["compiled", "compiling", "compile", "to compile"], correct: 0 },
+  { topic: "articles", prompt: "She is looking for ___ apartment near the office.", options: ["an", "a", "the", "Ø"], correct: 0 },
+  { topic: "articles", prompt: "___ manager approved the proposal this morning.", options: ["The", "A", "An", "Ø"], correct: 0 },
+  { topic: "articles", prompt: "___ information on the website is updated daily.", options: ["Ø", "A", "An", "The the"], correct: 0 },
+  { topic: "articles", prompt: "He commutes to work by ___ train every day.", options: ["Ø", "a", "an", "the a"], correct: 0 },
+  { topic: "articles", prompt: "This is ___ best offer we have received so far.", options: ["the", "a", "an", "Ø"], correct: 0 },
+  { topic: "articles", prompt: "They are planning to open ___ new branch next year.", options: ["a", "an", "the", "Ø"], correct: 0 },
+  { topic: "articles", prompt: "___ employees must complete the safety course.", options: ["Ø", "The a", "An", "A the"], correct: 0 },
+  { topic: "articles", prompt: "Could you send me ___ email confirming the order?", options: ["an", "a", "the", "Ø"], correct: 0 },
+  { topic: "articles", prompt: "___ Internet connection in the office has been unstable.", options: ["The", "A", "An", "Ø"], correct: 0 },
+  { topic: "articles", prompt: "We need ___ honest feedback from the client.", options: ["an", "a", "the", "Ø"], correct: 0 },
+  { topic: "question_types", prompt: "___ the shipment arrive on time last week?", options: ["Did", "Does", "Was", "Is"], correct: 0 },
+  { topic: "question_types", prompt: "___ is responsible for approving the invoices?", options: ["Who", "Whom", "Whose", "What"], correct: 0 },
+  { topic: "question_types", prompt: "You submitted the form already, ___?", options: ["didn't you", "did you", "don't you", "weren't you"], correct: 0 },
+  { topic: "question_types", prompt: "Do you know ___ the workshop will begin?", options: ["when", "when will", "does it", "when did"], correct: 0 },
+  { topic: "question_types", prompt: "___ can I find the nearest printer?", options: ["Where", "What", "Which", "Whose"], correct: 0 },
+  { topic: "question_types", prompt: "Could you tell me ___ the contract has been signed?", options: ["whether", "is it", "does it", "was it"], correct: 0 },
+  { topic: "question_types", prompt: "The client hasn't replied yet, ___?", options: ["has he", "hasn't he", "does he", "did he"], correct: 0 },
+  { topic: "question_types", prompt: "___ department handles customer complaints?", options: ["Which", "Who", "Whom", "Whose"], correct: 0 },
+  { topic: "question_types", prompt: "I'd like to know ___ the meeting has been rescheduled.", options: ["why", "why did", "why does", "why has"], correct: 0 },
+  { topic: "question_types", prompt: "___ does the store close on weekdays?", options: ["When", "Who", "Whose", "Which"], correct: 0 },
+  { topic: "subject_verb_agreement", prompt: "Each of the applicants ___ required to attend an interview.", options: ["is", "are", "were", "have been"], correct: 0 },
+  { topic: "subject_verb_agreement", prompt: "One of the machines ___ currently under repair.", options: ["is", "are", "were", "have been"], correct: 0 },
+  { topic: "subject_verb_agreement", prompt: "The director, along with her assistants, ___ reviewing the budget.", options: ["is", "are", "were", "have been"], correct: 0 },
+  { topic: "subject_verb_agreement", prompt: "Every employee and manager ___ expected to follow the policy.", options: ["is", "are", "were", "have been"], correct: 0 },
+  { topic: "subject_verb_agreement", prompt: "Neither of the proposals ___ approved by the board.", options: ["was", "were", "are", "have been"], correct: 0 },
+  { topic: "subject_verb_agreement", prompt: "The committee, as well as the CEO, ___ satisfied with the results.", options: ["is", "are", "were", "have been"], correct: 0 },
+  { topic: "subject_verb_agreement", prompt: "A number of employees ___ requested remote work options.", options: ["have", "has", "is", "was"], correct: 0 },
+  { topic: "subject_verb_agreement", prompt: "The number of complaints ___ decreased this quarter.", options: ["has", "have", "are", "were"], correct: 0 },
+  { topic: "subject_verb_agreement", prompt: "Either the manager or the assistants ___ responsible for the report.", options: ["are", "is", "was", "has been"], correct: 0 },
+  { topic: "subject_verb_agreement", prompt: "All of the equipment ___ inspected before shipment.", options: ["is", "are", "were", "have been"], correct: 0 },
+  { topic: "noun_clauses", prompt: "___ the merger will succeed remains uncertain.", options: ["Whether", "If", "That is", "What is"], correct: 0 },
+  { topic: "noun_clauses", prompt: "The survey shows ___ most customers prefer online support.", options: ["that", "what", "whether", "if that"], correct: 0 },
+  { topic: "noun_clauses", prompt: "Nobody was sure ___ the shipment had arrived.", options: ["whether", "that", "what", "why that"], correct: 0 },
+  { topic: "noun_clauses", prompt: "I don't understand ___ the system keeps crashing.", options: ["why", "why does", "why is", "why did"], correct: 0 },
+  { topic: "noun_clauses", prompt: "___ she decides will affect the whole team.", options: ["What", "That", "Whether", "If"], correct: 0 },
+  { topic: "noun_clauses", prompt: "Please let us know ___ you can attend the seminar.", options: ["whether", "that", "what", "why that"], correct: 0 },
+  { topic: "noun_clauses", prompt: "The report indicates ___ revenue increased last quarter.", options: ["that", "what", "whether", "if that"], correct: 0 },
+  { topic: "noun_clauses", prompt: "It is unclear ___ caused the delay.", options: ["what", "that", "whether it", "if that"], correct: 0 },
+  { topic: "noun_clauses", prompt: "We still don't know ___ the new manager starts.", options: ["when", "when does", "when will", "when did"], correct: 0 },
+  { topic: "noun_clauses", prompt: "___ he said during the meeting surprised everyone.", options: ["What", "That", "Whether", "If"], correct: 0 },
+  { topic: "adverbial_clauses", prompt: "___ the flight was delayed, she still made the meeting.", options: ["Although", "Because", "So that", "As soon as"], correct: 0 },
+  { topic: "adverbial_clauses", prompt: "We upgraded the system ___ it would run faster.", options: ["so that", "although", "because of", "in spite of"], correct: 0 },
+  { topic: "adverbial_clauses", prompt: "___ the budget is tight, the project will continue.", options: ["Even though", "Because", "So that", "Unless"], correct: 0 },
+  { topic: "adverbial_clauses", prompt: "___ the manager arrives, please have the report ready.", options: ["Before", "Because", "So that", "Although"], correct: 0 },
+  { topic: "adverbial_clauses", prompt: "The office closed early ___ the storm.", options: ["because of", "because", "although", "so that"], correct: 0 },
+  { topic: "adverbial_clauses", prompt: "___ he was new, he handled the client well.", options: ["Although", "Because", "So that", "As soon as"], correct: 0 },
+  { topic: "adverbial_clauses", prompt: "She backed up the files ___ she could recover them later.", options: ["so that", "although", "because of", "in spite of"], correct: 0 },
+  { topic: "adverbial_clauses", prompt: "___ as the contract expires, we must renegotiate the terms.", options: ["As soon", "So that", "Although", "Because of"], correct: 0 },
+  { topic: "adverbial_clauses", prompt: "The team kept working ___ it was already midnight.", options: ["even though", "because", "so that", "in order that"], correct: 0 },
+  { topic: "adverbial_clauses", prompt: "___ sales dropped, the company still opened new stores.", options: ["Although", "Because", "So that", "Since"], correct: 0 },
+  { topic: "subjunctive", prompt: "The board recommended that the policy ___ revised immediately.", options: ["be", "is", "was", "will be"], correct: 0 },
+  { topic: "subjunctive", prompt: "It is essential that every employee ___ the new guidelines.", options: ["follow", "follows", "followed", "will follow"], correct: 0 },
+  { topic: "subjunctive", prompt: "If the office ___ closer to my home, I would walk to work.", options: ["were", "was", "is", "had been"], correct: 0 },
+  { topic: "subjunctive", prompt: "I wish I ___ more time to prepare for the interview.", options: ["had", "have", "has", "will have"], correct: 0 },
+  { topic: "subjunctive", prompt: "The manager insisted that the report ___ submitted by Friday.", options: ["be", "is", "was", "will be"], correct: 0 },
+  { topic: "subjunctive", prompt: "It is vital that all data ___ backed up daily.", options: ["be", "is", "was", "will be"], correct: 0 },
+  { topic: "subjunctive", prompt: "If I ___ in charge, I would approve the budget.", options: ["were", "was", "am", "had been"], correct: 0 },
+  { topic: "subjunctive", prompt: "They requested that she ___ the documents before Monday.", options: ["review", "reviews", "reviewed", "will review"], correct: 0 },
+  { topic: "subjunctive", prompt: "I wish the client ___ more flexible about the deadline.", options: ["were", "was", "is", "had been"], correct: 0 },
+  { topic: "subjunctive", prompt: "It is important that the contract ___ signed today.", options: ["be", "is", "was", "will be"], correct: 0 },
 ];
 
 /* ============================== CONTENT: VOCABULARY ============================== */
@@ -1358,6 +1593,40 @@ const VOCAB_CATEGORIES = [
     { en: "brainstorming", vi: "động não" },
     { en: "comment", vi: "nhận xét, lời phê bình" },
   ]},
+  { id: "zenlish_w1", name: "Zenlish - Tuần 01", tagline: "Từ vựng khoá TOEIC cơ bản Zenlish, Tuần 01 (Ngày 1-4).", words: [
+    { en: "specialize", vi: "chuyên về, chuyên môn về", ex: "We specialize in serving freelance writers in the Chicago area." },
+    { en: "facility", vi: "cơ sở vật chất, trang thiết bị", ex: "We have a recreation center and other facilities." },
+    { en: "allow", vi: "cho phép, để cho", ex: "The hotel allows guests to upgrade their room for free." },
+    { en: "obtain", vi: "đạt được, thu được", ex: "We obtained approval from the head office." },
+    { en: "replace", vi: "thay thế", ex: "We need to replace our current e-mail system." },
+    { en: "appropriate", vi: "thích hợp, phù hợp", ex: "We recommend an appropriate place for the event." },
+    { en: "properly", vi: "một cách đúng đắn, thích hợp", ex: "Make sure the equipment works properly." },
+    { en: "including", vi: "bao gồm", ex: "All members, including the director, attended the meeting." },
+    { en: "supply", vi: "cung cấp", ex: "We supply all the materials needed for the construction project." },
+    { en: "original", vi: "gốc, nguyên bản", ex: "Please present the original receipt." },
+    { en: "continually", vi: "liên tục", ex: "We continually deliver excellent customer service." },
+    { en: "distribute", vi: "phân phát", ex: "They distribute gift pens to members." },
+    { en: "appearance", vi: "diện mạo, vẻ bề ngoài", ex: "We need to maintain the appearance of the office." },
+    { en: "current", vi: "hiện tại", ex: "All expenses for the current year must be reported." },
+    { en: "retain", vi: "giữ lại", ex: "Please retain the receipt for your records." },
+    { en: "equipment", vi: "trang thiết bị", ex: "We took an inventory of the electronic equipment." },
+    { en: "comfortable", vi: "thoải mái", ex: "We installed comfortable chairs in the lobby." },
+    { en: "content", vi: "nội dung", ex: "The movie's content is based on a true story." },
+    { en: "familiar", vi: "quen thuộc", ex: "You should be familiar with accounting theory." },
+    { en: "inventory", vi: "hàng tồn kho", ex: "We need to reduce the inventory." },
+    { en: "describe", vi: "miêu tả", ex: "Please describe the missing item clearly." },
+    { en: "removal", vi: "sự loại bỏ", ex: "The removal of the warranty sticker voids the guarantee." },
+    { en: "function", vi: "hoạt động, chức năng", ex: "Ensure that all of the office equipment always functions properly." },
+    { en: "vulnerable", vi: "dễ bị tổn thương", ex: "The device is more vulnerable to damage during normal usage." },
+    { en: "keep", vi: "giữ", ex: "We work hard to keep customers satisfied." },
+    { en: "enter", vi: "đi vào, nhập vào", ex: "Please put on protective gear prior to entering the factory." },
+    { en: "setting", vi: "cài đặt, môi trường, bối cảnh", ex: "She communicates smoothly with clients in both business and social settings." },
+    { en: "fill", vi: "làm đầy", ex: "We need to fill the open positions soon." },
+    { en: "remove", vi: "loại bỏ", ex: "Use a dry cloth to remove the dirt." },
+    { en: "load", vi: "chất lên, tải lên", ex: "Please load the paper into the copy machine." },
+    { en: "promptly", vi: "nhanh chóng, ngay lập tức", ex: "Please complete the task promptly." },
+    { en: "review", vi: "xem xét, đánh giá", ex: "Please review the enclosed instructions." },
+  ]},
 ];
 
 /* ============================== CONTENT: TOEIC OVERVIEW ============================== */
@@ -1406,6 +1675,7 @@ function mergeVocabCategories(customVocab) {
     return added.length ? { ...c, words: [...c.words, ...added] } : c;
   });
 }
+
 
 function shuffle(arr) {
   const a = [...arr];
@@ -1696,6 +1966,14 @@ function StudyApp({ studentKey, studentName, onSwitchUser }) {
   const [quizAnswers, setQuizAnswers] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
 
+  const [spellStage, setSpellStage] = useState("setup");
+  const [spellCategory, setSpellCategory] = useState("all");
+  const [spellQueue, setSpellQueue] = useState([]);
+  const [spellIndex, setSpellIndex] = useState(0);
+  const [spellInput, setSpellInput] = useState("");
+  const [spellResult, setSpellResult] = useState(null); // null | "correct" | "wrong"
+  const [spellScore, setSpellScore] = useState({ correct: 0, total: 0 });
+
   const [leaderboard, setLeaderboard] = useState([]);
   const [playerName, setPlayerName] = useState(studentName || "");
   const [nameSaved, setNameSaved] = useState(false);
@@ -1819,6 +2097,33 @@ function StudyApp({ studentKey, studentName, onSwitchUser }) {
   };
   const resetQuiz = () => { setQuizStage("setup"); setQuizIndex(0); setQuizAnswers([]); setSelectedOption(null); setNameSaved(false); };
 
+  const startSpelling = () => {
+    const pool = spellCategory === "all"
+      ? vocabCategories.flatMap((c) => c.words.map((w) => ({ ...w, catId: c.id })))
+      : (vocabCategories.find((c) => c.id === spellCategory)?.words || []).map((w) => ({ ...w, catId: spellCategory }));
+    if (pool.length === 0) return;
+    setSpellQueue(shuffle(pool));
+    setSpellIndex(0);
+    setSpellInput("");
+    setSpellResult(null);
+    setSpellScore({ correct: 0, total: 0 });
+    setSpellStage("active");
+  };
+  const checkSpelling = () => {
+    if (spellResult) return; // đã chấm câu này rồi, chờ bấm tiếp theo
+    const current = spellQueue[spellIndex];
+    const isCorrect = spellInput.trim().toLowerCase() === current.en.trim().toLowerCase();
+    setSpellResult(isCorrect ? "correct" : "wrong");
+    setSpellScore((s) => ({ correct: s.correct + (isCorrect ? 1 : 0), total: s.total + 1 }));
+  };
+  const nextSpelling = () => {
+    if (spellIndex + 1 >= spellQueue.length) { setSpellStage("done"); return; }
+    setSpellIndex((i) => i + 1);
+    setSpellInput("");
+    setSpellResult(null);
+  };
+  const resetSpelling = () => { setSpellStage("setup"); setSpellIndex(0); setSpellInput(""); setSpellResult(null); };
+
   const cat = vocabCategories[catIndex];
   const orderedIdx = currentDeckIndices(cat);
   const word = cat.words[orderedIdx[cardPos]];
@@ -1850,6 +2155,7 @@ function StudyApp({ studentKey, studentName, onSwitchUser }) {
             <NavTab active={view === "overview"} onClick={() => goto("overview")} icon={Info} label="Giới thiệu TOEIC" />
             <NavTab active={view === "grammar" || view === "grammarDetail"} onClick={() => goto("grammar")} icon={BookOpen} label="Ngữ pháp" />
             <NavTab active={view === "vocab" || view === "vocabDeck"} onClick={() => goto("vocab")} icon={Layers} label="Từ vựng" />
+            <NavTab active={view === "spelling"} onClick={() => { resetSpelling(); goto("spelling"); }} icon={Keyboard} label="Gõ từ" />
             <NavTab active={view === "quiz"} onClick={() => { resetQuiz(); goto("quiz"); }} icon={Target} label="Luyện tập" />
             <NavTab active={view === "leaderboard"} onClick={() => goto("leaderboard")} icon={Trophy} label="Xếp hạng" />
           </nav>
@@ -1872,6 +2178,11 @@ function StudyApp({ studentKey, studentName, onSwitchUser }) {
         {view === "quiz" && quizStage === "setup" && (
           <QuizSetupView quizFilter={quizFilter} setQuizFilter={setQuizFilter} quizCount={quizCount} setQuizCount={setQuizCount}
             onStart={startQuiz} readTopics={readTopics} hasReadAnyTopic={hasReadAnyTopic} onGoGrammar={() => goto("grammar")} customQuestions={customQuestions} />
+        )}
+        {view === "spelling" && (
+          <SpellingView stage={spellStage} vocabCategories={vocabCategories} category={spellCategory} setCategory={setSpellCategory}
+            onStart={startSpelling} queue={spellQueue} index={spellIndex} input={spellInput} setInput={setSpellInput}
+            result={spellResult} onCheck={checkSpelling} onNext={nextSpelling} score={spellScore} onRetry={resetSpelling} />
         )}
         {view === "quiz" && quizStage === "active" && quizQuestions.length > 0 && (
           <QuizActiveView question={quizQuestions[quizIndex]} index={quizIndex} total={quizQuestions.length}
@@ -2218,6 +2529,90 @@ function VocabDeckView({ category, word, cardPos, flipped, setFlipped, onNext, o
     </div>
   );
 }
+
+/* ============================== SPELLING (GÕ TỪ) ============================== */
+function SpellingView({ stage, vocabCategories, category, setCategory, onStart, queue, index, input, setInput, result, onCheck, onNext, score, onRetry }) {
+  if (stage === "setup") {
+    return (
+      <div>
+        <SectionEyebrow>Gõ từ</SectionEyebrow>
+        <h2 style={{ fontSize: 27, fontWeight: 800, margin: "0 0 8px", letterSpacing: "-0.01em" }}>Ôn lại từ vựng bằng cách gõ lại</h2>
+        <p style={{ fontSize: 13.5, color: T.textSoft, margin: "0 0 20px", maxWidth: 520 }}>
+          App sẽ đưa ra nghĩa tiếng Việt, bạn gõ đúng từ tiếng Anh tương ứng — cách tốt để kiểm tra xem mình có thực sự nhớ mặt chữ hay không, chứ không chỉ nhận mặt như flashcard.
+        </p>
+        <div style={cardStyle({ padding: 24, maxWidth: 420 })}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: T.textSoft, marginBottom: 8 }}>Chọn bộ từ vựng</div>
+          <select value={category} onChange={(e) => setCategory(e.target.value)}
+            style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: `1.5px solid ${T.border}`, fontSize: 14, boxSizing: "border-box", marginBottom: 16 }}>
+            <option value="all">Tất cả các bộ từ</option>
+            {vocabCategories.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.words.length} từ)</option>)}
+          </select>
+          <button className="app-btn" onClick={onStart} style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center" }}>
+            <Keyboard size={16} /> Bắt đầu gõ từ
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === "done") {
+    const pct = score.total > 0 ? Math.round((score.correct / score.total) * 100) : 0;
+    return (
+      <div>
+        <SectionEyebrow>Gõ từ</SectionEyebrow>
+        <h2 style={{ fontSize: 27, fontWeight: 800, margin: "0 0 20px", letterSpacing: "-0.01em" }}>Kết quả</h2>
+        <div style={cardStyle({ padding: 28, maxWidth: 420, textAlign: "center" })}>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 42, fontWeight: 700, color: T.primary, marginBottom: 6 }}>{score.correct}/{score.total}</div>
+          <div style={{ color: T.textSoft, fontSize: 14, marginBottom: 20 }}>Gõ đúng {pct}% số từ trong bộ này</div>
+          <button className="app-btn" onClick={onRetry} style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center" }}>
+            <RotateCcw size={16} /> Luyện lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const current = queue[index];
+  if (!current) return null;
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'IBM Plex Mono', monospace", fontSize: 12.5, color: T.textSoft, marginBottom: 14, maxWidth: 420 }}>
+        <span>Từ {index + 1} / {queue.length}</span>
+        <span>Đúng {score.correct} / {score.total}</span>
+      </div>
+      <div style={cardStyle({ padding: 28, maxWidth: 420 })}>
+        <div style={{ fontSize: 12, color: T.textSoft, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Nghĩa tiếng Việt</div>
+        <div style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 22, marginBottom: 20 }}>{current.vi}</div>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { result ? onNext() : onCheck(); } }}
+          disabled={!!result}
+          autoFocus
+          placeholder="Gõ từ tiếng Anh..."
+          style={{
+            width: "100%", padding: "12px 14px", borderRadius: 9, fontSize: 16, boxSizing: "border-box",
+            fontFamily: "'IBM Plex Mono', monospace", marginBottom: 12,
+            border: `2px solid ${result === "correct" ? T.success : result === "wrong" ? T.danger : T.border}`,
+            background: result === "correct" ? T.successSoft : result === "wrong" ? T.dangerSoft : "#fff",
+          }}
+        />
+        {result && (
+          <div style={{ fontSize: 13.5, marginBottom: 14, color: result === "correct" ? T.success : T.danger }}>
+            {result === "correct" ? "Chính xác!" : <>Chưa đúng — từ đúng là: <strong>{current.en}</strong></>}
+            {current.ex && <div style={{ color: T.textSoft, fontStyle: "italic", marginTop: 4 }}>{current.ex}</div>}
+          </div>
+        )}
+        <button className="app-btn" onClick={result ? onNext : onCheck}
+          style={{ ...primaryBtnStyle(), width: "100%", justifyContent: "center" }}>
+          {result ? "Từ tiếp theo" : "Kiểm tra"} <ChevronRight size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 
 /* ============================== QUIZ ============================== */
 function QuizSetupView({ quizFilter, setQuizFilter, quizCount, setQuizCount, onStart, readTopics, hasReadAnyTopic, onGoGrammar, customQuestions }) {
