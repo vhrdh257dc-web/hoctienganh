@@ -1428,7 +1428,7 @@ function buildGrammarPool(readTopics, onlyTopicId, customQuestions) {
   return [...GRAMMAR_QUIZ, ...extra]
     .filter((q) => (onlyTopicId ? q.topic === onlyTopicId : readTopics && readTopics[q.topic]))
     .map((q) => ({
-      type: "grammar", prompt: q.prompt, options: q.options, correctAnswer: q.options[q.correct], topic: q.topic,
+      type: "grammar", prompt: q.prompt, options: shuffle(q.options), correctAnswer: q.options[q.correct], topic: q.topic,
     }));
 }
 function todayStr() {
@@ -2222,7 +2222,7 @@ function VocabDeckView({ category, word, cardPos, flipped, setFlipped, onNext, o
 /* ============================== QUIZ ============================== */
 function QuizSetupView({ quizFilter, setQuizFilter, quizCount, setQuizCount, onStart, readTopics, hasReadAnyTopic, onGoGrammar, customQuestions }) {
   const filters = [{ id: "all", label: "Tất cả" }, { id: "grammar", label: "Ngữ pháp" }, { id: "vocab", label: "Từ vựng" }];
-  const counts = [5, 10, 15, 20];
+  const counts = [5, 10, 15, 20, 30, 50];
   const readCount = Object.keys(readTopics || {}).length;
   const activeTopic = GRAMMAR_TOPICS.find((t) => t.id === quizFilter);
   const isSingleTopicFilter = !!activeTopic;
